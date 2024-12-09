@@ -20,6 +20,7 @@ layout: main
         {% assign featured = posts.first %}
         <section class="hero" style="background-image: url('assets/img/hero_img/2.jpg');  overflow: hidden;">
             <div class="content">
+                <div class="shadow-overlay">
                 <time datetime="{{ featured.date | date_to_xmlschema }}" class="date">
                 </time>
              <!-- url({{ featured.image }})   id="target_bg_image"
@@ -42,6 +43,7 @@ layout: main
                         <span>{{ site.translations.button.read_now | default: "Resume" }}</span>
                     </a>
                 </div> -->
+            </div>
             </div>
         </section>
     {% endif %}
