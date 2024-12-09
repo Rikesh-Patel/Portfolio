@@ -18,7 +18,7 @@ layout: main
     {% if site.show_hero and paginator == nil or paginator.page == 1 %}
         <!-- Hero -->
         {% assign featured = posts.first %}
-        <section class="hero" style="background-image: url('/assets/img/hero_img/1.jpg');  min-height: 300px;">
+        <section style="background-image: url('/assets/img/hero_img/1.jpg');  min-height: 300px;">
             <div class="content">
                 <time datetime="{{ featured.date | date_to_xmlschema }}" class="date">
                 </time>
