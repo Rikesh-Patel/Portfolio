@@ -9,8 +9,8 @@ permalink: /about/
 
 <!-- <img class="img-rounded" src="/assets/img/uploads/profile.png" alt="Rikesh Patel" width="200"> -->
 
-
-### An aspiring data practitioner, I strive to generate reports that make data exciting and tackle emerging questions. Delivering quality, consistently.
+# About
+An aspiring data practitioner, I strive to generate reports that make data exciting and tackle emerging questions. Delivering quality, consistently.
 
 # Mission Statement
 Francis Bacon once said, "Knowledge is power." Now, centuries later, I say data is power. From my first moments with a computer in elementary school, I've had a fondness for number games. Games with rows upon rows of values itched the calculative part of my brain. Essentially to win these games, I needed to work to make the numbers larger, so I did everything from Google Sheets to Excel calculations, from putting a weight on my mouse to Python-scripting and macros; if it accrued more money, saved time, or got an achievement in the game, I would do it. The peak of this fascination was clicking 'Start' on a script and then lying back while some authority took ahold of my screen.
