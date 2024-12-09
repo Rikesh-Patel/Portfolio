@@ -20,6 +20,8 @@ layout: main
         {% assign featured = posts.first %}
         <section  class="hero" style="background-image: url('/assets/img/hero_img/2.jpg');">
             <div class="content">
+                <time datetime="{{ featured.date | date_to_xmlschema }}" class="date">
+                </time>
              <!-- url({{ featured.image }})   id="target_bg_image"
             <img id="target" src="assets/img/hero_img/1.jpg" class="img-bg"/>
             <div class="pixels"></div>

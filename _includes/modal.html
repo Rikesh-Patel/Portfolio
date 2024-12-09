@@ -13,7 +13,7 @@
                 {% assign shuffled_array = next_posts | shuffle %}
                 {% for post in shuffled_array limit:2 %}
                     <li>
-                        <a href="{{ post.url | prepend: site.baseurl }}">
+                        <a href="{{ post.url  }}"> <!-- | prepend: site.baseurl -->
                             <figure>
                                 {% if post.optimized_image %}
                                     <img src="{{ post.optimized_image }}">
