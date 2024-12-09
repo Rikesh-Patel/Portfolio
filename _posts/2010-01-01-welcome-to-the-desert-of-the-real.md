@@ -7,7 +7,7 @@ description: >-
   L
 image: assets/img/reports/bbc.jpg
 optimized_image: assets/img/reports/bbc.jpg
-url: google.com
+page_url: google.com
 category: NLP
 tags:
   - Sentiments
