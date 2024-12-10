@@ -1,5 +1,5 @@
-(function( $, window, undefined ) {
-  // Menu
+$(document).ready(function() {
+  // Menu Interaction
   $("#menu").click(function() {
     $("body").addClass("push-menu-to-right");
     $("#sidebar").addClass("open");
@@ -12,36 +12,28 @@
     $(".overlay").removeClass("show");
   });
 
-  // Header
-  $(window).scroll(function () {
-    var top = $(this).scrollTop();
-    if (top > 0) {
+  // Scroll Interaction for Header
+  $(window).scroll(function() {
+    if ($(this).scrollTop() > 0) {
       $("body").addClass("light");
-    }
-    else {
+    } else {
       $("body").removeClass("light");
     }
   });
 
+  // Randomize background image
+  const array = ["assets/img/hero_img/1.jpg", "assets/img/hero_img/2.jpg", "assets/img/hero_img/3.jpg", "assets/img/hero_img/4.jpg", "assets/img/hero_img/5.jpg", "assets/img/hero_img/6.jpg", "assets/img/hero_img/7.jpg"],
+        target = document.getElementById("target_bg_image"),
+        lastSrc = sessionStorage.lastSrc || target.style.backgroundImage;
+  
+  let random, newSrc = lastSrc;
+  do {
+    random = Math.floor(Math.random() * array.length);
+    newSrc = `url('${array[random]}')`;
+  } while (newSrc === lastSrc);
+  
+  target.style.backgroundImage = sessionStorage.lastSrc = newSrc;
 
-  $(document).ready(function() {
-    // Randomize background image
-    const log = console.log,
-          array = ["assets/img/hero_img/1.jpg", "assets/img/hero_img/2.jpg", "assets/img/hero_img/3.jpg", "assets/img/hero_img/4.jpg",  "assets/img/hero_img/5.jpg", "assets/img/hero_img/6.jpg", "assets/img/hero_img/7.jpg"],
-          target = document.getElementById("target_bg_image"),
-          lastSrc = sessionStorage.lastSrc || target.style.backgroundImage;
-
-    let random, newSrc = lastSrc;
-    do {
-        random = Math.floor(Math.random() * array.length);
-        newSrc = `url('${array[random]}')`;
-    } while (newSrc === lastSrc);
-
-    if (target) {
-        target.style.backgroundImage = sessionStorage.lastSrc = newSrc;
-    }
-    log(target);
-});
   
   // Modals
 
