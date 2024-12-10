@@ -102,10 +102,10 @@ document.addEventListener('DOMContentLoaded', function () {
   let random, newSrc = lastSrc;
   while (newSrc === lastSrc) {
     random = Math.floor(Math.random() * array.length); //newSrc = array[random];
-    newSrc = url('${array[random]}'); // target.src = sessionStorage.lastSrc = newSrc;
+    newSrc = `url('${array[random]}')`; 
   }
   
-  target.style.backgroundImage = sessionStorage.lastSrc = newSrc;
+  target.style.backgroundImage = sessionStorage.lastSrc = newSrc; // target.src = sessionStorage.lastSrc = newSrc;
   log(target);
 });
 
