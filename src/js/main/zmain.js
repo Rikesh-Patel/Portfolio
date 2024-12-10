@@ -1,5 +1,22 @@
-$(document).ready(function() {
-  // Menu Interaction
+(function($) {
+  // Randomize background image
+  const log = console.log,
+        array = ["assets/img/hero_img/1.jpg", "assets/img/hero_img/2.jpg", "assets/img/hero_img/3.jpg", "assets/img/hero_img/4.jpg",  "assets/img/hero_img/5.jpg", "assets/img/hero_img/6.jpg", "assets/img/hero_img/7.jpg"],
+        target = document.getElementById("target_bg_image"),
+        lastSrc = sessionStorage.lastSrc || target.style.backgroundImage;  ///target.getAttribute("src");
+  
+  let random, newSrc = lastSrc;
+  while (newSrc === lastSrc) {
+    random = Math.floor(Math.random() * array.length); //newSrc = array[random];
+    newSrc = `url('${array[random]}')`; 
+  }
+  
+  target.style.backgroundImage = sessionStorage.lastSrc = newSrc; // target.src = sessionStorage.lastSrc = newSrc;
+  log(target);
+});
+
+(function( $, window, undefined ) {
+  // Menu
   $("#menu").click(function() {
     $("body").addClass("push-menu-to-right");
     $("#sidebar").addClass("open");
@@ -12,29 +29,18 @@ $(document).ready(function() {
     $(".overlay").removeClass("show");
   });
 
-  // Scroll Interaction for Header
-  $(window).scroll(function() {
-    if ($(this).scrollTop() > 0) {
+  // Header
+  $(window).scroll(function () {
+    var top = $(this).scrollTop();
+    if (top > 0) {
       $("body").addClass("light");
-    } else {
+    }
+    else {
       $("body").removeClass("light");
     }
   });
 
-  // Randomize background image
-  const array = ["assets/img/hero_img/1.jpg", "assets/img/hero_img/2.jpg", "assets/img/hero_img/3.jpg", "assets/img/hero_img/4.jpg", "assets/img/hero_img/5.jpg", "assets/img/hero_img/6.jpg", "assets/img/hero_img/7.jpg"],
-        target = document.getElementById("target_bg_image"),
-        lastSrc = sessionStorage.lastSrc || target.style.backgroundImage;
-  
-  let random, newSrc = lastSrc;
-  do {
-    random = Math.floor(Math.random() * array.length);
-    newSrc = `url('${array[random]}')`;
-  } while (newSrc === lastSrc);
-  
-  target.style.backgroundImage = sessionStorage.lastSrc = newSrc;
 
-  
   // Modals
 
   var $closeBtn = $('.modal .close');
