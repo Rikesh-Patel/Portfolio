@@ -1,11 +1,9 @@
 # Site Settings
-name: Jekflix
-title: Jekflix | A blog theme for Jekyll
-description: Jekflix is a template for Jekyll inspired by Netflix and made by
-  Thiago Rossener.
+name: Web Portfolio
+title: Rikesh's Portfolio
+description: 
 tags:
   - blog
-  - template
   - jekyll
   - theme
   - netlify
@@ -15,10 +13,10 @@ menu:
     url: /
   - title: About
     url: /about
-  - title: Contact
-    url: /contact
-  - title: Feed
-    url: /feed.xml
+  # - title: Contact
+  #   url: /contact
+  # - title: Feed
+  #   url: /feed.xml
 email: rikesh.data@gmail.com
 # See: https://disqus.com/
 disqus_username: disqus_username
