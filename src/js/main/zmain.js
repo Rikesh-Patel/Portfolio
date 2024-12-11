@@ -1,6 +1,6 @@
 (function($) {
   // Randomize background image
-  const log = console.log,
+  const
         array = ["assets/img/hero_img/1.jpg", "assets/img/hero_img/2.jpg", "assets/img/hero_img/3.jpg", "assets/img/hero_img/4.jpg",  "assets/img/hero_img/5.jpg", "assets/img/hero_img/6.jpg", "assets/img/hero_img/7.jpg"],
         target = document.getElementById("target_bg_image"),
         lastSrc = sessionStorage.lastSrc || target.style.backgroundImage;  ///target.getAttribute("src");
