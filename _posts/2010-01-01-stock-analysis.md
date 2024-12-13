@@ -1,13 +1,13 @@
 ---
 date: 2019-04-20 23:48:05
 layout: post
-title: Stock Analysis
+title: Stock Prediction
 image: assets/img/reports/stock.jpg
 page_url: https://rikesh-patel-analyze-stock-stocks-3fvft1.streamlitapp.com/
-category: Dashboard
+category: Machine Learning
 tags:
   - Web App
-  - Machine Learning
+  - Finance
 author: mranderson
 paginate: true
 ---

@@ -6,7 +6,7 @@ image: assets/img/reports/socialmedia.jpg
 category: Dashboard
 tags:
   - Data Mining
-  - Pipeline
+  - Scripting
 author: mranderson
 paginate: true
 ---
