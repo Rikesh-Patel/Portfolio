@@ -44,8 +44,8 @@ two_columns_layout: true
 
 
 # Advanced Settings
-baseurl: "/Portfolio" # the subpath of your site, e.g. /blog
-url: "https://rikesh-patel.github.io" # the base hostname & protocol for your site
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "rikeshpatel.io" # the base hostname & protocol for your site     https://rikesh-patel.github.io
 google_analytics: "UA-XXXXXXXX-X"
 language: "en"
 categories_folder: category
