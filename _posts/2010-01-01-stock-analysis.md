@@ -1,5 +1,5 @@
 ---
-date: 2019-05-20 23:48:05
+date: 2019-04-20 23:48:05
 layout: post
 title: Stock Analysis
 image: assets/img/reports/stockwebapp.jpg
