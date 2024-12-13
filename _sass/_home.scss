@@ -121,7 +121,7 @@
     }
 
     h2 {
-      margin: rem(10px) 0;
+      margin: rem(5px) 0 rem(10px);
       font-size: rem(24px);
       @include mainFont(800);
       color: $accentDark;
