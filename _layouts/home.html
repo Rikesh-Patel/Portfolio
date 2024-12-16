@@ -25,26 +25,10 @@ layout: main
                 
                 <time datetime="{{ featured.date | date_to_xmlschema }}" class="date">
                 </time>
-             <!-- url({{ featured.image }})   id="target_bg_image"
-            <img id="target" src="assets/img/hero_img/1.jpg" class="img-bg"/>
-            <div class="pixels"></div>
-            <div class="gradient"></div>  
-            
-                <time datetime="{{ featured.date | date_to_xmlschema }}" class="date">
-                    {% if site.date_format == nil %}
-                        {{ featured.date | date: "%m.%d.%Y" }}
-                    {% else %}
-                        {{ featured.date | date: site.date_format }}
-                    {% endif %}
-                </time>-->
+
                 <h1 class="title" style="font-family: 'Montserrat', sans-serif;">Rikesh Patel—</h1> 
                 <p class="description" style="font-family: 'Montserrat', sans-serif;">Data Enthusiast</p>
-                <!-- <div class="buttons">
-                    <a href="{{ resume.pdf | prepend: site.baseurl }}" role="button" class="button">
-                        <svg><use xlink:href="#icon-read"></use></svg>
-                        <span>{{ site.translations.button.read_now | default: "Resume" }}</span>
-                    </a>
-                </div> -->
+
             </div>
         </section>
     {% endif %}
@@ -74,7 +58,7 @@ layout: main
                             </noscript> -->
                         {% endif %}
                         <!-- {% include new-post-tag.html date=post.date %} -->
-                        {% include read-icon.html %}
+                        <!-- {% include read-icon.html %} -->
                     </a>
                     <div class="box-info">
                         <!-- <time datetime="{{ post.date | date_to_xmlschema }}" class="date">
