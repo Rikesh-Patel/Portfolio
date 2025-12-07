@@ -1,12 +1,12 @@
 ---
-date: 2019-10-17 23:48:05
+date: 2019-10-15 23:48:05
 layout: post
-title: UCLA Hackathon
+title: King County, WA Housing 
 image: assets/img/reports/wa_housing.jpg
-page_url: https://docs.google.com/presentation/d/1gIFEM3E5Oczp3N2xyD2Dq8tJJL1Sd0fuwbWIkVNktqo/edit?usp=sharing
-category: Analytics
+page_url: docs.google.com/presentation/d/1gIFEM3E5Oczp3N2xyD2Dq8tJJL1Sd0fuwbWIkVNktqo/edit?usp=sharing
+category: Dashboard
 tags:
-  - Judges' Choice Winner
+  - Modeling
   - EDA
 author: mranderson
 ---
