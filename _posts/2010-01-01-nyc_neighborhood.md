@@ -4,9 +4,8 @@ layout: post
 title: NYC Housing Disparity 
 image: assets/img/reports/nyc_neighborhood.jpg
 page_url: linkedin.com/in/rikeshpatel-io/
-category: Analytics
+category: Dashboard
 tags:
-  - Dashboard
   - EDA
 author: mranderson
 paginate: true
