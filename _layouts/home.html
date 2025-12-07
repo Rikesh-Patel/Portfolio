@@ -8,17 +8,18 @@ layout: main
     {% assign posts = site.posts | where_exp:"post","post.is_generated != true" %}
 {% endif %}
 
-{% if site.show_hero and paginator == nil or paginator.page == 1 %}
+{% if site.show_hero and (paginator == nil or paginator.page == 1) %}
     {% assign offset = 1 %}
 {% else %}
     {% assign offset = 0 %}
 {% endif %}
 
+
 <main class="home {% if site.show_hero and paginator == nil or paginator.page == 1 %}no-padding{% endif %}" role="main">
     {% if site.show_hero and paginator == nil or paginator.page == 1 %}
         <!-- Hero -->
         {% assign featured = posts.first %}
-        <section  class="hero" style="max-height: 90vh; overflow: hidden;">
+        <section  class="hero" style="max-height: 75vh; overflow: hidden;">
             <img id='target' src="assets/img/hero_img/5.jpg" alt="Hero Image" style="top: 10px;width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: 0;">
             <div class="shadow-overlay" style="position: absolute; z-index: 1;"> </div>
             <div class="content" style="position: relative; z-index: 2;">

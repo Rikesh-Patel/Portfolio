@@ -1,0 +1,1599 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 750px;
+                 background-color: #222222;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 750px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="University of Michigan">University of Michigan</option>
+                                
+                                    <option value="6361">6361</option>
+                                
+                                    <option value="University of Texas, Austin">University of Texas, Austin</option>
+                                
+                                    <option value="7084">7084</option>
+                                
+                                    <option value="7373">7373</option>
+                                
+                                    <option value="Carnegie Mellon University">Carnegie Mellon University</option>
+                                
+                                    <option value="Brian Junker">Brian Junker</option>
+                                
+                                    <option value="10961">10961</option>
+                                
+                                    <option value="University of Kansas">University of Kansas</option>
+                                
+                                    <option value="Judith Carta">Judith Carta</option>
+                                
+                                    <option value="13538">13538</option>
+                                
+                                    <option value="Ohio State University">Ohio State University</option>
+                                
+                                    <option value="Laura Justice">Laura Justice</option>
+                                
+                                    <option value="11025">11025</option>
+                                
+                                    <option value="Purdue University">Purdue University</option>
+                                
+                                    <option value="5162">5162</option>
+                                
+                                    <option value="4399">4399</option>
+                                
+                                    <option value="10129">10129</option>
+                                
+                                    <option value="Charles Greenwood">Charles Greenwood</option>
+                                
+                                    <option value="13540">13540</option>
+                                
+                                    <option value="University of Illinois, Urbana-Champaign">University of Illinois, Urbana-Champaign</option>
+                                
+                                    <option value="William Cope">William Cope</option>
+                                
+                                    <option value="10756">10756</option>
+                                
+                                    <option value="University of Virginia">University of Virginia</option>
+                                
+                                    <option value="Sara Rimm-Kaufman">Sara Rimm-Kaufman</option>
+                                
+                                    <option value="12655">12655</option>
+                                
+                                    <option value="University of Denver">University of Denver</option>
+                                
+                                    <option value="Julie Sarama">Julie Sarama</option>
+                                
+                                    <option value="11119">11119</option>
+                                
+                                    <option value="1903">1903</option>
+                                
+                                    <option value="8309">8309</option>
+                                
+                                    <option value="12654">12654</option>
+                                
+                                    <option value="Emily Solari">Emily Solari</option>
+                                
+                                    <option value="10853">10853</option>
+                                
+                                    <option value="Vanderbilt University">Vanderbilt University</option>
+                                
+                                    <option value="Karen Harris">Karen Harris</option>
+                                
+                                    <option value="15366">15366</option>
+                                
+                                    <option value="University of Chicago">University of Chicago</option>
+                                
+                                    <option value="9106">9106</option>
+                                
+                                    <option value="David S. Cordray">David S. Cordray</option>
+                                
+                                    <option value="12020">12020</option>
+                                
+                                    <option value="University of California, Berkeley">University of California, Berkeley</option>
+                                
+                                    <option value="Mark Wilson">Mark Wilson</option>
+                                
+                                    <option value="14619">14619</option>
+                                
+                                    <option value="Robert C. Pianta">Robert C. Pianta</option>
+                                
+                                    <option value="12660">12660</option>
+                                
+                                    <option value="Florida State University">Florida State University</option>
+                                
+                                    <option value="Christopher Lonigan">Christopher Lonigan</option>
+                                
+                                    <option value="13518">13518</option>
+                                
+                                    <option value="Temple University">Temple University</option>
+                                
+                                    <option value="Nora S. Newcombe">Nora S. Newcombe</option>
+                                
+                                    <option value="13349">13349</option>
+                                
+                                    <option value="10080">10080</option>
+                                
+                                    <option value="9613">9613</option>
+                                
+                                    <option value="12652">12652</option>
+                                
+                                    <option value="University of Washington">University of Washington</option>
+                                
+                                    <option value="1129">1129</option>
+                                
+                                    <option value="6223">6223</option>
+                                
+                                    <option value="University of North Carolina, Chapel Hill">University of North Carolina, Chapel Hill</option>
+                                
+                                    <option value="Samuel Odom">Samuel Odom</option>
+                                
+                                    <option value="13557">13557</option>
+                                
+                                    <option value="12659">12659</option>
+                                
+                                    <option value="Sharon Vaughn">Sharon Vaughn</option>
+                                
+                                    <option value="13587">13587</option>
+                                
+                                    <option value="University of Nebraska, Lincoln">University of Nebraska, Lincoln</option>
+                                
+                                    <option value="Alexandra Torkelson-Trout">Alexandra Torkelson-Trout</option>
+                                
+                                    <option value="15032">15032</option>
+                                
+                                    <option value="15108">15108</option>
+                                
+                                    <option value="Daphna Bassok">Daphna Bassok</option>
+                                
+                                    <option value="15089">15089</option>
+                                
+                                    <option value="Christina Weiland">Christina Weiland</option>
+                                
+                                    <option value="18910">18910</option>
+                                
+                                    <option value="10760">10760</option>
+                                
+                                    <option value="University of Florida">University of Florida</option>
+                                
+                                    <option value="9083">9083</option>
+                                
+                                    <option value="15107">15107</option>
+                                
+                                    <option value="Margaret Burchinal">Margaret Burchinal</option>
+                                
+                                    <option value="13627">13627</option>
+                                
+                                    <option value="Dale Farran">Dale Farran</option>
+                                
+                                    <option value="13576">13576</option>
+                                
+                                    <option value="David Klahr">David Klahr</option>
+                                
+                                    <option value="13724">13724</option>
+                                
+                                    <option value="Debra Kamps">Debra Kamps</option>
+                                
+                                    <option value="13545">13545</option>
+                                
+                                    <option value="12658">12658</option>
+                                
+                                    <option value="University of Pennsylvania">University of Pennsylvania</option>
+                                
+                                    <option value="Laura Desimone">Laura Desimone</option>
+                                
+                                    <option value="13490">13490</option>
+                                
+                                    <option value="14620">14620</option>
+                                
+                                    <option value="13585">13585</option>
+                                
+                                    <option value="University of Connecticut">University of Connecticut</option>
+                                
+                                    <option value="Sandra Chafouleas">Sandra Chafouleas</option>
+                                
+                                    <option value="13722">13722</option>
+                                
+                                    <option value="University of California, Riverside">University of California, Riverside</option>
+                                
+                                    <option value="H. Lee Swanson">H. Lee Swanson</option>
+                                
+                                    <option value="13580">13580</option>
+                                
+                                    <option value="13351">13351</option>
+                                
+                                    <option value="Georgia State University">Georgia State University</option>
+                                
+                                    <option value="Randy Kamphaus">Randy Kamphaus</option>
+                                
+                                    <option value="12249">12249</option>
+                                
+                                    <option value="8946">8946</option>
+                                
+                                    <option value="8940">8940</option>
+                                
+                                    <option value="10063">10063</option>
+                                
+                                    <option value="12653">12653</option>
+                                
+                                    <option value="University of Oregon">University of Oregon</option>
+                                
+                                    <option value="Ed Kame'enui">Ed Kame'enui</option>
+                                
+                                    <option value="13764">13764</option>
+                                
+                                    <option value="1777">1777</option>
+                                
+                                    <option value="University of Wisconsin, Madison">University of Wisconsin, Madison</option>
+                                
+                                    <option value="Mitchell Nathan">Mitchell Nathan</option>
+                                
+                                    <option value="7167">7167</option>
+                                
+                                    <option value="Anita Wager">Anita Wager</option>
+                                
+                                    <option value="13683">13683</option>
+                                
+                                    <option value="13548">13548</option>
+                                
+                                    <option value="10852">10852</option>
+                                
+                                    <option value="11118">11118</option>
+                                
+                                    <option value="17784">17784</option>
+                                
+                                    <option value="Sarah Lubienski">Sarah Lubienski</option>
+                                
+                                    <option value="15024">15024</option>
+                                
+                                    <option value="Rose Sevcik">Rose Sevcik</option>
+                                
+                                    <option value="13610">13610</option>
+                                
+                                    <option value="13727">13727</option>
+                                
+                                    <option value="Gerald Tindal">Gerald Tindal</option>
+                                
+                                    <option value="13569">13569</option>
+                                
+                                    <option value="12021">12021</option>
+                                
+                                    <option value="Adam Gamoran">Adam Gamoran</option>
+                                
+                                    <option value="17918">17918</option>
+                                
+                                    <option value="University of Delaware">University of Delaware</option>
+                                
+                                    <option value="Nancy Jordan">Nancy Jordan</option>
+                                
+                                    <option value="13631">13631</option>
+                                
+                                    <option value="Paul Cobb">Paul Cobb</option>
+                                
+                                    <option value="13717">13717</option>
+                                
+                                    <option value="Elizabeth Stormshak">Elizabeth Stormshak</option>
+                                
+                                    <option value="13688">13688</option>
+                                
+                                    <option value="8157">8157</option>
+                                
+                                    <option value="1855">1855</option>
+                                
+                                    <option value="Northwestern University">Northwestern University</option>
+                                
+                                    <option value="Larry Hedges">Larry Hedges</option>
+                                
+                                    <option value="13531">13531</option>
+                                
+                                    <option value="11116">11116</option>
+                                
+                                    <option value="University of Missouri, Columbia">University of Missouri, Columbia</option>
+                                
+                                    <option value="Wendy Reinke">Wendy Reinke</option>
+                                
+                                    <option value="13083">13083</option>
+                                
+                                    <option value="12662">12662</option>
+                                
+                                    <option value="Stanford University">Stanford University</option>
+                                
+                                    <option value="Susanna Loeb">Susanna Loeb</option>
+                                
+                                    <option value="13613">13613</option>
+                                
+                                    <option value="1668">1668</option>
+                                
+                                    <option value="15022">15022</option>
+                                
+                                    <option value="13560">13560</option>
+                                
+                                    <option value="5264">5264</option>
+                                
+                                    <option value="13541">13541</option>
+                                
+                                    <option value="Susan Sheridan">Susan Sheridan</option>
+                                
+                                    <option value="13567">13567</option>
+                                
+                                    <option value="Eric Bruns">Eric Bruns</option>
+                                
+                                    <option value="15152">15152</option>
+                                
+                                    <option value="13615">13615</option>
+                                
+                                    <option value="Patricia Snyder">Patricia Snyder</option>
+                                
+                                    <option value="13591">13591</option>
+                                
+                                    <option value="13534">13534</option>
+                                
+                                    <option value="5129">5129</option>
+                                
+                                    <option value="10282">10282</option>
+                                
+                                    <option value="3184">3184</option>
+                                
+                                    <option value="6909">6909</option>
+                                
+                                    <option value="3190">3190</option>
+                                
+                                    <option value="University of Pittsburgh">University of Pittsburgh</option>
+                                
+                                    <option value="1499">1499</option>
+                                
+                                    <option value="4282">4282</option>
+                                
+                                    <option value="13514">13514</option>
+                                
+                                    <option value="13718">13718</option>
+                                
+                                    <option value="13768">13768</option>
+                                
+                                    <option value="901">901</option>
+                                
+                                    <option value="Susan Dynarski">Susan Dynarski</option>
+                                
+                                    <option value="13648">13648</option>
+                                
+                                    <option value="Stephen Raudenbush">Stephen Raudenbush</option>
+                                
+                                    <option value="17660">17660</option>
+                                
+                                    <option value="13723">13723</option>
+                                
+                                    <option value="17177">17177</option>
+                                
+                                    <option value="15034">15034</option>
+                                
+                                    <option value="City University of New York (CUNY)">City University of New York (CUNY)</option>
+                                
+                                    <option value="Bruce Homer">Bruce Homer</option>
+                                
+                                    <option value="12649">12649</option>
+                                
+                                    <option value="Robert Siegler">Robert Siegler</option>
+                                
+                                    <option value="13636">13636</option>
+                                
+                                    <option value="3761">3761</option>
+                                
+                                    <option value="6270">6270</option>
+                                
+                                    <option value="6717">6717</option>
+                                
+                                    <option value="8937">8937</option>
+                                
+                                    <option value="15020">15020</option>
+                                
+                                    <option value="18651">18651</option>
+                                
+                                    <option value="5138">5138</option>
+                                
+                                    <option value="13624">13624</option>
+                                
+                                    <option value="13637">13637</option>
+                                
+                                    <option value="8679">8679</option>
+                                
+                                    <option value="5161">5161</option>
+                                
+                                    <option value="4981">4981</option>
+                                
+                                    <option value="6253">6253</option>
+                                
+                                    <option value="13539">13539</option>
+                                
+                                    <option value="14621">14621</option>
+                                
+                                    <option value="13568">13568</option>
+                                
+                                    <option value="13685">13685</option>
+                                
+                                    <option value="10877">10877</option>
+                                
+                                    <option value="10761">10761</option>
+                                
+                                    <option value="13563">13563</option>
+                                
+                                    <option value="Douglas Powell">Douglas Powell</option>
+                                
+                                    <option value="13641">13641</option>
+                                
+                                    <option value="13663">13663</option>
+                                
+                                    <option value="University of Texas Health Science Center at Houston">University of Texas Health Science Center at Houston</option>
+                                
+                                    <option value="Jason Anthony">Jason Anthony</option>
+                                
+                                    <option value="14326">14326</option>
+                                
+                                    <option value="15021">15021</option>
+                                
+                                    <option value="Sean Reardon">Sean Reardon</option>
+                                
+                                    <option value="14337">14337</option>
+                                
+                                    <option value="University of Iowa">University of Iowa</option>
+                                
+                                    <option value="William Therrien">William Therrien</option>
+                                
+                                    <option value="14858">14858</option>
+                                
+                                    <option value="13608">13608</option>
+                                
+                                    <option value="13626">13626</option>
+                                
+                                    <option value="Robert Horner">Robert Horner</option>
+                                
+                                    <option value="13619">13619</option>
+                                
+                                    <option value="6701">6701</option>
+                                
+                                    <option value="15023">15023</option>
+                                
+                                    <option value="13604">13604</option>
+                                
+                                    <option value="13590">13590</option>
+                                
+                                    <option value="13690">13690</option>
+                                
+                                    <option value="12650">12650</option>
+                                
+                                    <option value="13584">13584</option>
+                                
+                                    <option value="10107">10107</option>
+                                
+                                    <option value="2975">2975</option>
+                                
+                                    <option value="2978">2978</option>
+                                
+                                    <option value="13612">13612</option>
+                                
+                                    <option value="13570">13570</option>
+                                
+                                    <option value="Brian A. Jacob">Brian A. Jacob</option>
+                                
+                                    <option value="13657">13657</option>
+                                
+                                    <option value="13617">13617</option>
+                                
+                                    <option value="6393">6393</option>
+                                
+                                    <option value="Charles Perfetti">Charles Perfetti</option>
+                                
+                                    <option value="13645">13645</option>
+                                
+                                    <option value="11117">11117</option>
+                                
+                                    <option value="13589">13589</option>
+                                
+                                    <option value="6466">6466</option>
+                                
+                                    <option value="6409">6409</option>
+                                
+                                    <option value="13625">13625</option>
+                                
+                                    <option value="13725">13725</option>
+                                
+                                    <option value="13628">13628</option>
+                                
+                                    <option value="13583">13583</option>
+                                
+                                    <option value="10878">10878</option>
+                                
+                                    <option value="13489">13489</option>
+                                
+                                    <option value="University of California, Irvine">University of California, Irvine</option>
+                                
+                                    <option value="Greg Duncan">Greg Duncan</option>
+                                
+                                    <option value="13700">13700</option>
+                                
+                                    <option value="Howard Wills">Howard Wills</option>
+                                
+                                    <option value="13611">13611</option>
+                                
+                                    <option value="13085">13085</option>
+                                
+                                    <option value="10759">10759</option>
+                                
+                                    <option value="14336">14336</option>
+                                
+                                    <option value="13653">13653</option>
+                                
+                                    <option value="12023">12023</option>
+                                
+                                    <option value="13684">13684</option>
+                                
+                                    <option value="15033">15033</option>
+                                
+                                    <option value="905">905</option>
+                                
+                                    <option value="3655">3655</option>
+                                
+                                    <option value="8826">8826</option>
+                                
+                                    <option value="13618">13618</option>
+                                
+                                    <option value="Jason Grissom">Jason Grissom</option>
+                                
+                                    <option value="13693">13693</option>
+                                
+                                    <option value="11026">11026</option>
+                                
+                                    <option value="13692">13692</option>
+                                
+                                    <option value="13517">13517</option>
+                                
+                                    <option value="Prentice Starkey">Prentice Starkey</option>
+                                
+                                    <option value="13623">13623</option>
+                                
+                                    <option value="12247">12247</option>
+                                
+                                    <option value="13488">13488</option>
+                                
+                                    <option value="17902">17902</option>
+                                
+                                    <option value="10959">10959</option>
+                                
+                                    <option value="13639">13639</option>
+                                
+                                    <option value="14856">14856</option>
+                                
+                                    <option value="37">37</option>
+                                
+                                    <option value="6179">6179</option>
+                                
+                                    <option value="6294">6294</option>
+                                
+                                    <option value="2699">2699</option>
+                                
+                                    <option value="13572">13572</option>
+                                
+                                    <option value="13573">13573</option>
+                                
+                                    <option value="8261">8261</option>
+                                
+                                    <option value="13562">13562</option>
+                                
+                                    <option value="13665">13665</option>
+                                
+                                    <option value="12022">12022</option>
+                                
+                                    <option value="13588">13588</option>
+                                
+                                    <option value="10960">10960</option>
+                                
+                                    <option value="13605">13605</option>
+                                
+                                    <option value="10757">10757</option>
+                                
+                                    <option value="Florida International University">Florida International University</option>
+                                
+                                    <option value="William Pelham">William Pelham</option>
+                                
+                                    <option value="5338">5338</option>
+                                
+                                    <option value="13642">13642</option>
+                                
+                                    <option value="10879">10879</option>
+                                
+                                    <option value="1253">1253</option>
+                                
+                                    <option value="13650">13650</option>
+                                
+                                    <option value="13643">13643</option>
+                                
+                                    <option value="15365">15365</option>
+                                
+                                    <option value="15105">15105</option>
+                                
+                                    <option value="11115">11115</option>
+                                
+                                    <option value="13575">13575</option>
+                                
+                                    <option value="13350">13350</option>
+                                
+                                    <option value="15367">15367</option>
+                                
+                                    <option value="13694">13694</option>
+                                
+                                    <option value="3666">3666</option>
+                                
+                                    <option value="Kara Hume">Kara Hume</option>
+                                
+                                    <option value="13551">13551</option>
+                                
+                                    <option value="13565">13565</option>
+                                
+                                    <option value="15087">15087</option>
+                                
+                                    <option value="13566">13566</option>
+                                
+                                    <option value="13691">13691</option>
+                                
+                                    <option value="15153">15153</option>
+                                
+                                    <option value="15090">15090</option>
+                                
+                                    <option value="13646">13646</option>
+                                
+                                    <option value="New York University">New York University</option>
+                                
+                                    <option value="Jennifer Hill">Jennifer Hill</option>
+                                
+                                    <option value="13385">13385</option>
+                                
+                                    <option value="10876">10876</option>
+                                
+                                    <option value="12250">12250</option>
+                                
+                                    <option value="13516">13516</option>
+                                
+                                    <option value="5186">5186</option>
+                                
+                                    <option value="13571">13571</option>
+                                
+                                    <option value="13564">13564</option>
+                                
+                                    <option value="15104">15104</option>
+                                
+                                    <option value="5751">5751</option>
+                                
+                                    <option value="13577">13577</option>
+                                
+                                    <option value="13638">13638</option>
+                                
+                                    <option value="13578">13578</option>
+                                
+                                    <option value="13543">13543</option>
+                                
+                                    <option value="13716">13716</option>
+                                
+                                    <option value="14857">14857</option>
+                                
+                                    <option value="15155">15155</option>
+                                
+                                    <option value="13689">13689</option>
+                                
+                                    <option value="13656">13656</option>
+                                
+                                    <option value="19498">19498</option>
+                                
+                                    <option value="13535">13535</option>
+                                
+                                    <option value="17664">17664</option>
+                                
+                                    <option value="848">848</option>
+                                
+                                    <option value="13530">13530</option>
+                                
+                                    <option value="13574">13574</option>
+                                
+                                    <option value="14859">14859</option>
+                                
+                                    <option value="6934">6934</option>
+                                
+                                    <option value="14327">14327</option>
+                                
+                                    <option value="Kristin Duppong Hurley">Kristin Duppong Hurley</option>
+                                
+                                    <option value="8287">8287</option>
+                                
+                                    <option value="15031">15031</option>
+                                
+                                    <option value="8326">8326</option>
+                                
+                                    <option value="13614">13614</option>
+                                
+                                    <option value="10851">10851</option>
+                                
+                                    <option value="13537">13537</option>
+                                
+                                    <option value="13609">13609</option>
+                                
+                                    <option value="17914">17914</option>
+                                
+                                    <option value="11024">11024</option>
+                                
+                                    <option value="13702">13702</option>
+                                
+                                    <option value="13767">13767</option>
+                                
+                                    <option value="13582">13582</option>
+                                
+                                    <option value="13549">13549</option>
+                                
+                                    <option value="13491">13491</option>
+                                
+                                    <option value="13607">13607</option>
+                                
+                                    <option value="13383">13383</option>
+                                
+                                    <option value="13666">13666</option>
+                                
+                                    <option value="13686">13686</option>
+                                
+                                    <option value="13719">13719</option>
+                                
+                                    <option value="7051">7051</option>
+                                
+                                    <option value="3159">3159</option>
+                                
+                                    <option value="13529">13529</option>
+                                
+                                    <option value="13552">13552</option>
+                                
+                                    <option value="5212">5212</option>
+                                
+                                    <option value="12248">12248</option>
+                                
+                                    <option value="6938">6938</option>
+                                
+                                    <option value="9498">9498</option>
+                                
+                                    <option value="4954">4954</option>
+                                
+                                    <option value="13533">13533</option>
+                                
+                                    <option value="2726">2726</option>
+                                
+                                    <option value="13532">13532</option>
+                                
+                                    <option value="16130">16130</option>
+                                
+                                    <option value="3050">3050</option>
+                                
+                                    <option value="6129">6129</option>
+                                
+                                    <option value="408">408</option>
+                                
+                                    <option value="13721">13721</option>
+                                
+                                    <option value="13664">13664</option>
+                                
+                                    <option value="13348">13348</option>
+                                
+                                    <option value="13586">13586</option>
+                                
+                                    <option value="13492">13492</option>
+                                
+                                    <option value="13558">13558</option>
+                                
+                                    <option value="13699">13699</option>
+                                
+                                    <option value="17919">17919</option>
+                                
+                                    <option value="13766">13766</option>
+                                
+                                    <option value="20438">20438</option>
+                                
+                                    <option value="12648">12648</option>
+                                
+                                    <option value="1116">1116</option>
+                                
+                                    <option value="13644">13644</option>
+                                
+                                    <option value="13606">13606</option>
+                                
+                                    <option value="15106">15106</option>
+                                
+                                    <option value="739">739</option>
+                                
+                                    <option value="9561">9561</option>
+                                
+                                    <option value="3130">3130</option>
+                                
+                                    <option value="13652">13652</option>
+                                
+                                    <option value="11023">11023</option>
+                                
+                                    <option value="13726">13726</option>
+                                
+                                    <option value="13687">13687</option>
+                                
+                                    <option value="13629">13629</option>
+                                
+                                    <option value="13701">13701</option>
+                                
+                                    <option value="13640">13640</option>
+                                
+                                    <option value="13715">13715</option>
+                                
+                                    <option value="13384">13384</option>
+                                
+                                    <option value="Geoffrey Saxe">Geoffrey Saxe</option>
+                                
+                                    <option value="19286">19286</option>
+                                
+                                    <option value="13622">13622</option>
+                                
+                                    <option value="13">13</option>
+                                
+                                    <option value="13547">13547</option>
+                                
+                                    <option value="12656">12656</option>
+                                
+                                    <option value="13720">13720</option>
+                                
+                                    <option value="13655">13655</option>
+                                
+                                    <option value="13550">13550</option>
+                                
+                                    <option value="2835">2835</option>
+                                
+                                    <option value="13581">13581</option>
+                                
+                                    <option value="13649">13649</option>
+                                
+                                    <option value="David Uttal">David Uttal</option>
+                                
+                                    <option value="18358">18358</option>
+                                
+                                    <option value="8120">8120</option>
+                                
+                                    <option value="13765">13765</option>
+                                
+                                    <option value="University of Minnesota">University of Minnesota</option>
+                                
+                                    <option value="Mark L. Davison">Mark L. Davison</option>
+                                
+                                    <option value="18214">18214</option>
+                                
+                                    <option value="10958">10958</option>
+                                
+                                    <option value="14325">14325</option>
+                                
+                                    <option value="14339">14339</option>
+                                
+                                    <option value="20294">20294</option>
+                                
+                                    <option value="1130">1130</option>
+                                
+                                    <option value="13616">13616</option>
+                                
+                                    <option value="12019">12019</option>
+                                
+                                    <option value="10758">10758</option>
+                                
+                                    <option value="9327">9327</option>
+                                
+                                    <option value="13082">13082</option>
+                                
+                                    <option value="15369">15369</option>
+                                
+                                    <option value="15088">15088</option>
+                                
+                                    <option value="10880">10880</option>
+                                
+                                    <option value="13542">13542</option>
+                                
+                                    <option value="13515">13515</option>
+                                
+                                    <option value="10875">10875</option>
+                                
+                                    <option value="12661">12661</option>
+                                
+                                    <option value="15030">15030</option>
+                                
+                                    <option value="15154">15154</option>
+                                
+                                    <option value="13544">13544</option>
+                                
+                                    <option value="13651">13651</option>
+                                
+                                    <option value="15029">15029</option>
+                                
+                                    <option value="14324">14324</option>
+                                
+                                    <option value="12647">12647</option>
+                                
+                                    <option value="1005">1005</option>
+                                
+                                    <option value="13647">13647</option>
+                                
+                                    <option value="13654">13654</option>
+                                
+                                    <option value="15028">15028</option>
+                                
+                                    <option value="13559">13559</option>
+                                
+                                    <option value="13621">13621</option>
+                                
+                                    <option value="17779">17779</option>
+                                
+                                    <option value="15368">15368</option>
+                                
+                                    <option value="15091">15091</option>
+                                
+                                    <option value="4178">4178</option>
+                                
+                                    <option value="13084">13084</option>
+                                
+                                    <option value="12651">12651</option>
+                                
+                                    <option value="3119">3119</option>
+                                
+                                    <option value="13561">13561</option>
+                                
+                                    <option value="13630">13630</option>
+                                
+                                    <option value="13382">13382</option>
+                                
+                                    <option value="541">541</option>
+                                
+                                    <option value="5767">5767</option>
+                                
+                                    <option value="12657">12657</option>
+                                
+                                    <option value="University of Miami">University of Miami</option>
+                                
+                                    <option value="Daryl Greenfield">Daryl Greenfield</option>
+                                
+                                    <option value="17835">17835</option>
+                                
+                                    <option value="13546">13546</option>
+                                
+                                    <option value="13536">13536</option>
+                                
+                                    <option value="13579">13579</option>
+                                
+                                    <option value="14338">14338</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+              <div id="filter-menu" class="card-header">
+                <div class="row no-gutters">
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'item')"
+                            id="select-item"
+                        >
+                        <option value="">Select a network item</option>
+                        <option value="edge">edge</option>
+                        <option value="node">node</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'property')"
+                            id="select-property"
+                        >
+                        <option value="">Select a property...</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            id="select-value"
+                        >
+                        <option value="">Select value(s)...</option>
+                    </select>
+                  </div>
+                  <div class="col-1 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="highlightFilter(filter);">Filter</button>
+                  </div>
+                  <div class="col-2 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="clearFilter(true)">Reset Selection</button>
+                  </div>
+                </div>
+              </div>
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+                  // explicitly using onItemAdd and this function as we need to save multiple values
+                  let updateValueFilter = function() {
+                      return function () {
+                      filter['value'].push(arguments[0])
+                      }
+                  }
+
+                  let valueControl = new TomSelect("#select-value",{
+                      maxItems: null,
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: updateValueFilter()
+                  });
+
+                  let addValues = function() {
+                      return function () {
+                          // clear the current value options and add the selected attribute values
+                          // tom-select handles duplicates
+                          let selectedProperty = arguments[0];
+                          valueControl.clear();
+                          valueControl.clearOptions();
+                          filter['value'] = []
+                          if (filter['item'] === 'node') {
+                              for (let each in allNodes) {
+                                  valueControl.addOption({
+                                      id:allNodes[each][selectedProperty],
+                                      title:allNodes[each][selectedProperty]
+                                  })
+                              }
+                          }
+                          else if (filter['item'] === 'edge') {
+                              for (let each in allEdges) {
+                                  valueControl.addOption({
+                                      id:allEdges[each][selectedProperty],
+                                      title:allEdges[each][selectedProperty]
+                                  })
+                              }
+                          }
+                      }
+                  };
+
+                  let propControl = new TomSelect("#select-property",{
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addValues()
+                  });
+
+                  let addProperties = function() {
+                      return function () {
+                          // loops through the selected network item and adds the attributes to dropdown
+                          // tom-select handles duplicates
+                          clearFilter(false)
+                          if (arguments[0] === 'edge') {
+                              for (let each in allEdges) {
+                                  if (allEdges.hasOwnProperty(each)) {
+                                      for (let eachProp in allEdges[each]) {
+                                          if (allEdges[each].hasOwnProperty(eachProp)) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          else if (arguments[0] === 'node') {
+                              for (let each in allNodes) {
+                                  if (allNodes.hasOwnProperty(each)) {
+                                      for (let eachProp in allNodes[each]) {
+                                          if (allNodes[each].hasOwnProperty(eachProp)
+                                              && (eachProp !== 'hidden' && eachProp !== 'savedLabel'
+                                                  && eachProp !== 'hiddenLabel')) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  };
+
+                  let itemControl = new TomSelect("#select-item",{
+                      create: false,
+                      sortField:{
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addProperties()
+                  });
+
+                  function clearFilter(reset) {
+                      // utility function to clear all the selected filter options
+                      // if reset is set to true, the existing filter will be removed
+                      // else, only the dropdown options are cleared
+                      propControl.clear();
+                      propControl.clearOptions();
+                      valueControl.clear();
+                      valueControl.clearOptions();
+                      filter = {
+                          item : '',
+                          property : '',
+                          value : []
+                      }
+                      if (reset) {
+                          itemControl.clear();
+                          filterHighlight({nodes: []})
+                      }
+                  }
+
+                  function updateFilter(value, key) {
+                      // key could be 'item' or 'property' and value is as selected in dropdown
+                      filter[key] = value
+                  }
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "green", "font": {"color": "white"}, "id": "University of Michigan", "label": "University of Michigan", "shape": "dot", "size": 30}, {"color": "orange", "font": {"color": "white"}, "id": "6361", "label": "Adam Sales", "shape": "dot", "title": "R305D210029\nYear: 2021\nName: Adam Sales\nRole: Co-Principal Investigators"}, {"color": "green", "font": {"color": "white"}, "id": "University of Texas, Austin", "label": "University of Texas, Austin", "shape": "dot", "size": 30}, {"color": "orange", "font": {"color": "white"}, "id": "7084", "label": "Adam Sales", "shape": "dot", "title": "R305D210036\nYear: 2021\nName: Adam Sales\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "7373", "label": "Adam Sales", "shape": "dot", "title": "R305D210031\nYear: 2021\nName: Adam Sales\nRole: Co-Principal Investigators"}, {"color": "green", "font": {"color": "white"}, "id": "Carnegie Mellon University", "label": "Carnegie Mellon University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Brian Junker", "label": "Brian Junker", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "10961", "label": "Adam Sales", "shape": "dot", "title": "R305B100012\nYear: 2010\nName: Adam Sales\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Kansas", "label": "University of Kansas", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Judith Carta", "label": "Judith Carta", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13538", "label": "Ai Jun", "shape": "dot", "title": "R324B180004\nYear: 2018\nName: Ai Jun\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "Ohio State University", "label": "Ohio State University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Laura Justice", "label": "Laura Justice", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "11025", "label": "Alain Bengochea", "shape": "dot", "title": "R305B120008\nYear: 2012\nName: Alain Bengochea\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "Purdue University", "label": "Purdue University", "shape": "dot", "size": 30}, {"color": "orange", "font": {"color": "white"}, "id": "5162", "label": "Alana Schnitz", "shape": "dot", "title": "R324A180186\nYear: 2018\nName: Alana Schnitz\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "4399", "label": "Alana Schnitz", "shape": "dot", "title": "R305A170241\nYear: 2017\nName: Alana Schnitz\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "10129", "label": "Alana Schnitz", "shape": "dot", "title": "R324A170048\nYear: 2017\nName: Alana Schnitz\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "Charles Greenwood", "label": "Charles Greenwood", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13540", "label": "Alana Schnitz", "shape": "dot", "title": "R324B120004\nYear: 2012\nName: Alana Schnitz\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Illinois, Urbana-Champaign", "label": "University of Illinois, Urbana-Champaign", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "William Cope", "label": "William Cope", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "10756", "label": "Alecia Magnifico", "shape": "dot", "title": "R305B110008\nYear: 2011\nName: Alecia Magnifico\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Virginia", "label": "University of Virginia", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Sara Rimm-Kaufman", "label": "Sara Rimm-Kaufman", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "12655", "label": "Alison Baroody", "shape": "dot", "title": "R305B100009\nYear: 2010\nName: Alison Baroody\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Denver", "label": "University of Denver", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Julie Sarama", "label": "Julie Sarama", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "11119", "label": "Alissa Lange", "shape": "dot", "title": "R305A070491\nYear: 2007\nName: Alissa Lange\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "1903", "label": "Allison Atteberry", "shape": "dot", "title": "R305A220281\nYear: 2022\nName: Allison Atteberry\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "8309", "label": "Allison Atteberry", "shape": "dot", "title": "R305H190060\nYear: 2019\nName: Allison Atteberry\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "12654", "label": "Allison Atteberry", "shape": "dot", "title": "R305B100009\nYear: 2010\nName: Allison Atteberry\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Emily Solari", "label": "Emily Solari", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "10853", "label": "Alyssa Henry", "shape": "dot", "title": "R324B180034\nYear: 2018\nName: Alyssa Henry\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "Vanderbilt University", "label": "Vanderbilt University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Karen Harris", "label": "Karen Harris", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "15366", "label": "Amanda Miller", "shape": "dot", "title": "R324B080005\nYear: 2008\nName: Amanda Miller\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Chicago", "label": "University of Chicago", "shape": "dot", "size": 30}, {"color": "orange", "font": {"color": "white"}, "id": "9106", "label": "Amy Cassata-Widera", "shape": "dot", "title": "R305A110621\nYear: 2011\nName: Amy Cassata-Widera\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "David S. Cordray", "label": "David S. Cordray", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "12020", "label": "Amy Cassata-Widera", "shape": "dot", "title": "R305B050029\nYear: 2005\nName: Amy Cassata-Widera\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of California, Berkeley", "label": "University of California, Berkeley", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Mark Wilson", "label": "Mark Wilson", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "14619", "label": "Amy Dray", "shape": "dot", "title": "R305A070254\nYear: 2007\nName: Amy Dray\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Robert C. Pianta", "label": "Robert C. Pianta", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "12660", "label": "Amy Luckner", "shape": "dot", "title": "R305B060009\nYear: 2006\nName: Amy Luckner\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "Florida State University", "label": "Florida State University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Christopher Lonigan", "label": "Christopher Lonigan", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13518", "label": "Ana Marty", "shape": "dot", "title": "R305B050032\nYear: 2005\nName: Ana Marty\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "Temple University", "label": "Temple University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Nora S. Newcombe", "label": "Nora S. Newcombe", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13349", "label": "Andres Bustamante", "shape": "dot", "title": "R305B150014\nYear: 2015\nName: Andres Bustamante\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "10080", "label": "Andrew McEachin", "shape": "dot", "title": "R305U200006\nYear: 2020\nName: Andrew McEachin\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "9613", "label": "Andrew McEachin", "shape": "dot", "title": "R305C180025\nYear: 2018\nName: Andrew McEachin\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "12652", "label": "Andrew McEachin", "shape": "dot", "title": "R305B100009\nYear: 2010\nName: Andrew McEachin\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Washington", "label": "University of Washington", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "1129", "label": "Angel Fettig", "shape": "dot", "title": "R324A170149\nYear: 2017\nName: Angel Fettig\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "6223", "label": "Angel Fettig", "shape": "dot", "title": "R324A160086\nYear: 2016\nName: Angel Fettig\nRole: Co-Principal Investigators"}, {"color": "green", "font": {"color": "white"}, "id": "University of North Carolina, Chapel Hill", "label": "University of North Carolina, Chapel Hill", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Samuel Odom", "label": "Samuel Odom", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13557", "label": "Angel Fettig", "shape": "dot", "title": "R324B090005\nYear: 2009\nName: Angel Fettig\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12659", "label": "Angela BushRichards", "shape": "dot", "title": "R305B060009\nYear: 2006\nName: Angela BushRichards\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Sharon Vaughn", "label": "Sharon Vaughn", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13587", "label": "Angela Hairrell", "shape": "dot", "title": "R324B080008\nYear: 2008\nName: Angela Hairrell\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Nebraska, Lincoln", "label": "University of Nebraska, Lincoln", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Alexandra Torkelson-Trout", "label": "Alexandra Torkelson-Trout", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "15032", "label": "Angelique Aitken", "shape": "dot", "title": "R324B160033\nYear: 2016\nName: Angelique Aitken\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15108", "label": "Anisah Waite", "shape": "dot", "title": "R305B130013\nYear: 2013\nName: Anisah Waite\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Daphna Bassok", "label": "Daphna Bassok", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "15089", "label": "Anna Shapiro", "shape": "dot", "title": "R305B170002\nYear: 2017\nName: Anna Shapiro\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Christina Weiland", "label": "Christina Weiland", "shape": "dot", "size": 8}, {"color": "white", "font": {"color": "white"}, "id": "18910", "label": "Anna Shapiro", "shape": "dot", "title": "R305B150012\nYear: 2015\nName: Anna Shapiro\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10760", "label": "Anna Smith", "shape": "dot", "title": "R305B110008\nYear: 2011\nName: Anna Smith\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Florida", "label": "University of Florida", "shape": "dot", "size": 30}, {"color": "orange", "font": {"color": "white"}, "id": "9083", "label": "Arya Ansari", "shape": "dot", "title": "R305A210538\nYear: 2021\nName: Arya Ansari\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "15107", "label": "Arya Ansari", "shape": "dot", "title": "R305B130013\nYear: 2013\nName: Arya Ansari\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Margaret Burchinal", "label": "Margaret Burchinal", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13627", "label": "Aryn Dotterer", "shape": "dot", "title": "R305B060021\nYear: 2006\nName: Aryn Dotterer\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Dale Farran", "label": "Dale Farran", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13576", "label": "Asha Spivak", "shape": "dot", "title": "R305B100016\nYear: 2010\nName: Asha Spivak\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "David Klahr", "label": "David Klahr", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13724", "label": "Audrey Kittredge", "shape": "dot", "title": "R305B110003\nYear: 2011\nName: Audrey Kittredge\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Debra Kamps", "label": "Debra Kamps", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13545", "label": "Ben Mason", "shape": "dot", "title": "R324B100004\nYear: 2010\nName: Ben Mason\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12658", "label": "Ben Pogodzinski", "shape": "dot", "title": "R305B060009\nYear: 2006\nName: Ben Pogodzinski\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Pennsylvania", "label": "University of Pennsylvania", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Laura Desimone", "label": "Laura Desimone", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13490", "label": "Beth Covay", "shape": "dot", "title": "R305B100013\nYear: 2010\nName: Beth Covay\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14620", "label": "Betsy J. Feldman", "shape": "dot", "title": "R305A070254\nYear: 2007\nName: Betsy J. Feldman\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13585", "label": "Brandy Maynard", "shape": "dot", "title": "R324B080008\nYear: 2008\nName: Brandy Maynard\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Connecticut", "label": "University of Connecticut", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Sandra Chafouleas", "label": "Sandra Chafouleas", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13722", "label": "Breda O\u0027Keeffe", "shape": "dot", "title": "R324B080007\nYear: 2008\nName: Breda O\u0027Keeffe\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of California, Riverside", "label": "University of California, Riverside", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "H. Lee Swanson", "label": "H. Lee Swanson", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13580", "label": "Brenda Arellano", "shape": "dot", "title": "R324B080002\nYear: 2008\nName: Brenda Arellano\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13351", "label": "Brianna McMillan", "shape": "dot", "title": "R305B150014\nYear: 2015\nName: Brianna McMillan\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "Georgia State University", "label": "Georgia State University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Randy Kamphaus", "label": "Randy Kamphaus", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "12249", "label": "Bridget Dever", "shape": "dot", "title": "R324B080006\nYear: 2008\nName: Bridget Dever\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "8946", "label": "Bridget Hatfield", "shape": "dot", "title": "R305A210502\nYear: 2021\nName: Bridget Hatfield\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "8940", "label": "Bridget Hatfield", "shape": "dot", "title": "R305A150196\nYear: 2015\nName: Bridget Hatfield\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "10063", "label": "Bridget Hatfield", "shape": "dot", "title": "R305A150107\nYear: 2015\nName: Bridget Hatfield\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "12653", "label": "Bridget Hatfield", "shape": "dot", "title": "R305B100009\nYear: 2010\nName: Bridget Hatfield\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Oregon", "label": "University of Oregon", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Ed Kame\u0027enui", "label": "Ed Kame\u0027enui", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13764", "label": "Bryant Jensen", "shape": "dot", "title": "R305B110012\nYear: 2011\nName: Bryant Jensen\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "1777", "label": "Candace Walkington", "shape": "dot", "title": "R305A200401\nYear: 2020\nName: Candace Walkington\nRole: PrincipalName"}, {"color": "green", "font": {"color": "white"}, "id": "University of Wisconsin, Madison", "label": "University of Wisconsin, Madison", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Mitchell Nathan", "label": "Mitchell Nathan", "shape": "dot", "size": 8}, {"color": "orange", "font": {"color": "white"}, "id": "7167", "label": "Candace Walkington", "shape": "dot", "title": "R305A160020\nYear: 2016\nName: Candace Walkington\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "Anita Wager", "label": "Anita Wager", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13683", "label": "Candace Walkington", "shape": "dot", "title": "R305B100007\nYear: 2010\nName: Candace Walkington\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13548", "label": "Carla Schmidt", "shape": "dot", "title": "R324B100004\nYear: 2010\nName: Carla Schmidt\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10852", "label": "Carlin Conner", "shape": "dot", "title": "R324B180034\nYear: 2018\nName: Carlin Conner\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "11118", "label": "Carolyn Kilday", "shape": "dot", "title": "R305A070491\nYear: 2007\nName: Carolyn Kilday\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "17784", "label": "Carolyn Kilday", "shape": "dot", "title": "R305B040049\nYear: 2004\nName: Carolyn Kilday\nRole: Predoc"}, {"color": "red", "font": {"color": "white"}, "id": "Sarah Lubienski", "label": "Sarah Lubienski", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "15024", "label": "Casey George", "shape": "dot", "title": "R305B100017\nYear: 2010\nName: Casey George\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Rose Sevcik", "label": "Rose Sevcik", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13610", "label": "Cassandra Coddington", "shape": "dot", "title": "R305A070313\nYear: 2007\nName: Cassandra Coddington\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13727", "label": "Cathy Chase", "shape": "dot", "title": "R305B110003\nYear: 2011\nName: Cathy Chase\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Gerald Tindal", "label": "Gerald Tindal", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13569", "label": "Cheng-Fei Lai", "shape": "dot", "title": "R305B080004\nYear: 2008\nName: Cheng-Fei Lai\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12021", "label": "Chris Hulleman", "shape": "dot", "title": "R305B050029\nYear: 2005\nName: Chris Hulleman\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Adam Gamoran", "label": "Adam Gamoran", "shape": "dot", "size": 8}, {"color": "white", "font": {"color": "white"}, "id": "17918", "label": "Chris Hulleman", "shape": "dot", "title": "R305C050055\nYear: 2005\nName: Chris Hulleman\nRole: Predoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Delaware", "label": "University of Delaware", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Nancy Jordan", "label": "Nancy Jordan", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13631", "label": "Christina Barbieri", "shape": "dot", "title": "R305B130012\nYear: 2013\nName: Christina Barbieri\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Paul Cobb", "label": "Paul Cobb", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13717", "label": "Christine Larson", "shape": "dot", "title": "R305B080008\nYear: 2008\nName: Christine Larson\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Elizabeth Stormshak", "label": "Elizabeth Stormshak", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13688", "label": "Christopher Fleming", "shape": "dot", "title": "R324B180001\nYear: 2018\nName: Christopher Fleming\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "8157", "label": "Christopher Rhoads", "shape": "dot", "title": "R305C200012\nYear: 2020\nName: Christopher Rhoads\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "1855", "label": "Christopher Rhoads", "shape": "dot", "title": "R305A170370\nYear: 2017\nName: Christopher Rhoads\nRole: PrincipalName"}, {"color": "green", "font": {"color": "white"}, "id": "Northwestern University", "label": "Northwestern University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Larry Hedges", "label": "Larry Hedges", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13531", "label": "Christopher Rhoads", "shape": "dot", "title": "R305B100027\nYear: 2010\nName: Christopher Rhoads\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "11116", "label": "Christopher Wolfe", "shape": "dot", "title": "R305A070491\nYear: 2007\nName: Christopher Wolfe\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Missouri, Columbia", "label": "University of Missouri, Columbia", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Wendy Reinke", "label": "Wendy Reinke", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13083", "label": "Chynna McCall", "shape": "dot", "title": "R305B150028\nYear: 2015\nName: Chynna McCall\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12662", "label": "Claire E. Cameron", "shape": "dot", "title": "R305B060009\nYear: 2006\nName: Claire E. Cameron\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "Stanford University", "label": "Stanford University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Susanna Loeb", "label": "Susanna Loeb", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13613", "label": "Colette Cann", "shape": "dot", "title": "R305B060010\nYear: 2006\nName: Colette Cann\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "1668", "label": "Colleen Ganley", "shape": "dot", "title": "R305A170463\nYear: 2017\nName: Colleen Ganley\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "15022", "label": "Colleen Ganley", "shape": "dot", "title": "R305B100017\nYear: 2010\nName: Colleen Ganley\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13560", "label": "Connie Wong", "shape": "dot", "title": "R324B090005\nYear: 2009\nName: Connie Wong\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "5264", "label": "Constance Beecher", "shape": "dot", "title": "R305H140135\nYear: 2014\nName: Constance Beecher\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13541", "label": "Constance Beecher", "shape": "dot", "title": "R324B120004\nYear: 2012\nName: Constance Beecher\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Susan Sheridan", "label": "Susan Sheridan", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13567", "label": "Courtney Wheeler", "shape": "dot", "title": "R305B080010\nYear: 2008\nName: Courtney Wheeler\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Eric Bruns", "label": "Eric Bruns", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "15152", "label": "Courtney Zulauf-McCurdy", "shape": "dot", "title": "R305B170021\nYear: 2017\nName: Courtney Zulauf-McCurdy\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13615", "label": "Craig M. Rawlings", "shape": "dot", "title": "R305B060010\nYear: 2006\nName: Craig M. Rawlings\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Patricia Snyder", "label": "Patricia Snyder", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13591", "label": "Crystal Bishop", "shape": "dot", "title": "R324B120002\nYear: 2012\nName: Crystal Bishop\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13534", "label": "Cynthia Levine", "shape": "dot", "title": "R305B100027\nYear: 2010\nName: Cynthia Levine\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "5129", "label": "Cynthia Puranik", "shape": "dot", "title": "R305N210030\nYear: 2021\nName: Cynthia Puranik\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "10282", "label": "Cynthia Puranik", "shape": "dot", "title": "R324A200046\nYear: 2020\nName: Cynthia Puranik\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "3184", "label": "Cynthia Puranik", "shape": "dot", "title": "R305A190168\nYear: 2019\nName: Cynthia Puranik\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "6909", "label": "Cynthia Puranik", "shape": "dot", "title": "R305A160253\nYear: 2016\nName: Cynthia Puranik\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "3190", "label": "Cynthia Puranik", "shape": "dot", "title": "R305A140701\nYear: 2012\nName: Cynthia Puranik\nRole: PrincipalName"}, {"color": "green", "font": {"color": "white"}, "id": "University of Pittsburgh", "label": "University of Pittsburgh", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "1499", "label": "Cynthia Puranik", "shape": "dot", "title": "R324A110162\nYear: 2011\nName: Cynthia Puranik\nRole: PrincipalName"}, {"color": "red", "font": {"color": "white"}, "id": "4282", "label": "Cynthia Puranik", "shape": "dot", "title": "R305A090622\nYear: 2008\nName: Cynthia Puranik\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13514", "label": "Cynthia Puranik", "shape": "dot", "title": "R305B050032\nYear: 2005\nName: Cynthia Puranik\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13718", "label": "Dan Berebitsky", "shape": "dot", "title": "R305B080008\nYear: 2008\nName: Dan Berebitsky\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13768", "label": "Daniel Anderson", "shape": "dot", "title": "R305B110012\nYear: 2011\nName: Daniel Anderson\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "901", "label": "Daniel Kreisman", "shape": "dot", "title": "R305A220172\nYear: 2022\nName: Daniel Kreisman\nRole: PrincipalName"}, {"color": "red", "font": {"color": "white"}, "id": "Susan Dynarski", "label": "Susan Dynarski", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13648", "label": "Daniel Kreisman", "shape": "dot", "title": "R305B110001\nYear: 2011\nName: Daniel Kreisman\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Stephen Raudenbush", "label": "Stephen Raudenbush", "shape": "dot", "size": 8}, {"color": "white", "font": {"color": "white"}, "id": "17660", "label": "Daniel Kreisman", "shape": "dot", "title": "R305B090025\nYear: 2009\nName: Daniel Kreisman\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13723", "label": "Daniel Maggin", "shape": "dot", "title": "R324B080007\nYear: 2008\nName: Daniel Maggin\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "17177", "label": "Daniel Maggin", "shape": "dot", "title": "R305B040110\nYear: 2004\nName: Daniel Maggin\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15034", "label": "Daniel Poling", "shape": "dot", "title": "R324B160033\nYear: 2016\nName: Daniel Poling\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "City University of New York (CUNY)", "label": "City University of New York (CUNY)", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Bruce Homer", "label": "Bruce Homer", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "12649", "label": "Darsh Ramdass", "shape": "dot", "title": "R305B080007\nYear: 2008\nName: Darsh Ramdass\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Robert Siegler", "label": "Robert Siegler", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13636", "label": "David Braithwaite", "shape": "dot", "title": "R305B100001\nYear: 2010\nName: David Braithwaite\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "3761", "label": "David Purpura", "shape": "dot", "title": "R305A200389\nYear: 2020\nName: David Purpura\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "6270", "label": "David Purpura", "shape": "dot", "title": "R305A200368\nYear: 2020\nName: David Purpura\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "6717", "label": "David Purpura", "shape": "dot", "title": "R305A150243\nYear: 2015\nName: David Purpura\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "8937", "label": "David Purpura", "shape": "dot", "title": "R305A150196\nYear: 2015\nName: David Purpura\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "15020", "label": "David Purpura", "shape": "dot", "title": "R305B100017\nYear: 2010\nName: David Purpura\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "18651", "label": "David Purpura", "shape": "dot", "title": "R305B040074\nYear: 2004\nName: David Purpura\nRole: Predoc"}, {"color": "red", "font": {"color": "white"}, "id": "5138", "label": "Dore LaForett", "shape": "dot", "title": "R305A180063\nYear: 2018\nName: Dore LaForett\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13624", "label": "Dore LaForett", "shape": "dot", "title": "R305B060021\nYear: 2006\nName: Dore LaForett\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13637", "label": "Drew Bailey", "shape": "dot", "title": "R305B100001\nYear: 2010\nName: Drew Bailey\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "8679", "label": "Dwight Irvin", "shape": "dot", "title": "R324A190223\nYear: 2019\nName: Dwight Irvin\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "5161", "label": "Dwight Irvin", "shape": "dot", "title": "R324A180186\nYear: 2018\nName: Dwight Irvin\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "4981", "label": "Dwight Irvin", "shape": "dot", "title": "R324A170048\nYear: 2017\nName: Dwight Irvin\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "6253", "label": "Dwight Irvin", "shape": "dot", "title": "R324A170141\nYear: 2017\nName: Dwight Irvin\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13539", "label": "Dwight Irvin", "shape": "dot", "title": "R324B120004\nYear: 2012\nName: Dwight Irvin\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14621", "label": "Edward Bein", "shape": "dot", "title": "R305A070254\nYear: 2007\nName: Edward Bein\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13568", "label": "Elisa Jamgochian", "shape": "dot", "title": "R305B080004\nYear: 2008\nName: Elisa Jamgochian\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13685", "label": "Elise Lockwood", "shape": "dot", "title": "R305B100007\nYear: 2010\nName: Elise Lockwood\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10877", "label": "Elizabeth Ayers", "shape": "dot", "title": "R305B110017\nYear: 2011\nName: Elizabeth Ayers\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10761", "label": "Elizabeth Bagley", "shape": "dot", "title": "R305B110008\nYear: 2011\nName: Elizabeth Bagley\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13563", "label": "Elizabeth Kim (formerly Moorman)", "shape": "dot", "title": "R305B080010\nYear: 2008\nName: Elizabeth Kim (formerly Moorman)\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Douglas Powell", "label": "Douglas Powell", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13641", "label": "Elizabeth Steed", "shape": "dot", "title": "R305B050030\nYear: 2005\nName: Elizabeth Steed\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13663", "label": "Emily Fyfe", "shape": "dot", "title": "R305B130007\nYear: 2013\nName: Emily Fyfe\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Texas Health Science Center at Houston", "label": "University of Texas Health Science Center at Houston", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Jason Anthony", "label": "Jason Anthony", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "14326", "label": "Emily Merz", "shape": "dot", "title": "R324B110007\nYear: 2011\nName: Emily Merz\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15021", "label": "Emily Miller", "shape": "dot", "title": "R305B100017\nYear: 2010\nName: Emily Miller\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Sean Reardon", "label": "Sean Reardon", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "14337", "label": "Emily Penner", "shape": "dot", "title": "R305B130017\nYear: 2013\nName: Emily Penner\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Iowa", "label": "University of Iowa", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "William Therrien", "label": "William Therrien", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "14858", "label": "Emily Schoerning", "shape": "dot", "title": "R305B100005\nYear: 2010\nName: Emily Schoerning\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13608", "label": "Endia Lindo", "shape": "dot", "title": "R305A070313\nYear: 2007\nName: Endia Lindo\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13626", "label": "Erica Odom", "shape": "dot", "title": "R305B060021\nYear: 2006\nName: Erica Odom\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Robert Horner", "label": "Robert Horner", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13619", "label": "Erika Lunkenheimer", "shape": "dot", "title": "R305B060014\nYear: 2006\nName: Erika Lunkenheimer\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "6701", "label": "Erin Reid", "shape": "dot", "title": "R305A180462\nYear: 2018\nName: Erin Reid\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "15023", "label": "Erin Reid", "shape": "dot", "title": "R305B100017\nYear: 2010\nName: Erin Reid\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13604", "label": "Ezekial Dixon-Rom\u00e1n", "shape": "dot", "title": "R305B050014\nYear: 2005\nName: Ezekial Dixon-Rom\u00e1n\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13590", "label": "Feihong Wang", "shape": "dot", "title": "R324B120002\nYear: 2012\nName: Feihong Wang\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13690", "label": "Felice Resnik", "shape": "dot", "title": "R324B180001\nYear: 2018\nName: Felice Resnik\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12650", "label": "Florrie Ng", "shape": "dot", "title": "R305B080007\nYear: 2008\nName: Florrie Ng\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13584", "label": "Gareth Morgan", "shape": "dot", "title": "R324B080008\nYear: 2008\nName: Gareth Morgan\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "10107", "label": "Gina Biancarosa", "shape": "dot", "title": "R324A210042\nYear: 2021\nName: Gina Biancarosa\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "2975", "label": "Gina Biancarosa", "shape": "dot", "title": "R305A190393\nYear: 2019\nName: Gina Biancarosa\nRole: PrincipalName"}, {"color": "red", "font": {"color": "white"}, "id": "2978", "label": "Gina Biancarosa", "shape": "dot", "title": "R305A140185\nYear: 2014\nName: Gina Biancarosa\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13612", "label": "Gina Biancarosa", "shape": "dot", "title": "R305B060010\nYear: 2006\nName: Gina Biancarosa\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13570", "label": "Gina Mariano", "shape": "dot", "title": "R305B080004\nYear: 2008\nName: Gina Mariano\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Brian A. Jacob", "label": "Brian A. Jacob", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13657", "label": "Gloria Yeomans-Maldonado", "shape": "dot", "title": "R305B170015\nYear: 2017\nName: Gloria Yeomans-Maldonado\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13617", "label": "Greg Fosco", "shape": "dot", "title": "R305B060014\nYear: 2006\nName: Greg Fosco\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "6393", "label": "Gwen Frishkoff", "shape": "dot", "title": "R305A140647\nYear: 2014\nName: Gwen Frishkoff\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "Charles Perfetti", "label": "Charles Perfetti", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13645", "label": "Gwen Frishkoff", "shape": "dot", "title": "R305B050022\nYear: 2005\nName: Gwen Frishkoff\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "11117", "label": "Heather (HyunJung) Kim", "shape": "dot", "title": "R305A070491\nYear: 2007\nName: Heather (HyunJung) Kim\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13589", "label": "Helena Mawdsley", "shape": "dot", "title": "R324B120002\nYear: 2012\nName: Helena Mawdsley\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "6466", "label": "Iheoma Iruka", "shape": "dot", "title": "R305A190199\nYear: 2019\nName: Iheoma Iruka\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "6409", "label": "Iheoma Iruka", "shape": "dot", "title": "R305N160016\nYear: 2016\nName: Iheoma Iruka\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13625", "label": "Iheoma Iruka", "shape": "dot", "title": "R305B060021\nYear: 2006\nName: Iheoma Iruka\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13725", "label": "Ilya Goldin", "shape": "dot", "title": "R305B110003\nYear: 2011\nName: Ilya Goldin\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13628", "label": "Ilyse Resnick", "shape": "dot", "title": "R305B130012\nYear: 2013\nName: Ilyse Resnick\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13583", "label": "Irina Mokrova", "shape": "dot", "title": "R305B100028\nYear: 2010\nName: Irina Mokrova\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10878", "label": "J. Micah Roos", "shape": "dot", "title": "R305B110017\nYear: 2011\nName: J. Micah Roos\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13489", "label": "Jade Caines", "shape": "dot", "title": "R305B100013\nYear: 2010\nName: Jade Caines\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of California, Irvine", "label": "University of California, Irvine", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Greg Duncan", "label": "Greg Duncan", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13700", "label": "Jade Jenkins", "shape": "dot", "title": "R305B120013\nYear: 2012\nName: Jade Jenkins\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Howard Wills", "label": "Howard Wills", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13611", "label": "James Lee", "shape": "dot", "title": "R324B200021\nYear: 2020\nName: James Lee\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13085", "label": "James Sinclair", "shape": "dot", "title": "R305B150028\nYear: 2015\nName: James Sinclair\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10759", "label": "Jane Blanken-Webb", "shape": "dot", "title": "R305B110008\nYear: 2011\nName: Jane Blanken-Webb\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14336", "label": "Jane Rochmes", "shape": "dot", "title": "R305B130017\nYear: 2013\nName: Jane Rochmes\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13653", "label": "Jason Baron", "shape": "dot", "title": "R305B170015\nYear: 2017\nName: Jason Baron\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12023", "label": "Jason Luellen", "shape": "dot", "title": "R305B050029\nYear: 2005\nName: Jason Luellen\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13684", "label": "Jennifer Cooper", "shape": "dot", "title": "R305B100007\nYear: 2010\nName: Jennifer Cooper\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15033", "label": "Jennifer Farley", "shape": "dot", "title": "R324B160033\nYear: 2016\nName: Jennifer Farley\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "905", "label": "Jennifer Frank", "shape": "dot", "title": "R324R210020\nYear: 2021\nName: Jennifer Frank\nRole: PrincipalName"}, {"color": "red", "font": {"color": "white"}, "id": "3655", "label": "Jennifer Frank", "shape": "dot", "title": "R305A150391\nYear: 2015\nName: Jennifer Frank\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "8826", "label": "Jennifer Frank", "shape": "dot", "title": "R305A140113\nYear: 2014\nName: Jennifer Frank\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13618", "label": "Jennifer Frank", "shape": "dot", "title": "R305B060014\nYear: 2006\nName: Jennifer Frank\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Jason Grissom", "label": "Jason Grissom", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13693", "label": "Jennifer L. Nelson", "shape": "dot", "title": "R305B170009\nYear: 2017\nName: Jennifer L. Nelson\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "11026", "label": "Jennifer Riggie Ottley", "shape": "dot", "title": "R305B120008\nYear: 2012\nName: Jennifer Riggie Ottley\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13692", "label": "Jennifer Timmer", "shape": "dot", "title": "R305B170009\nYear: 2017\nName: Jennifer Timmer\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13517", "label": "Jessica Waesche", "shape": "dot", "title": "R305B050032\nYear: 2005\nName: Jessica Waesche\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Prentice Starkey", "label": "Prentice Starkey", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13623", "label": "Jie Li", "shape": "dot", "title": "R305B050013\nYear: 2005\nName: Jie Li\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12247", "label": "Jihye Kim", "shape": "dot", "title": "R324B080006\nYear: 2008\nName: Jihye Kim\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13488", "label": "Jill Bowdon", "shape": "dot", "title": "R305B100013\nYear: 2010\nName: Jill Bowdon\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "17902", "label": "Jill Bowdon", "shape": "dot", "title": "R305C050055\nYear: 2005\nName: Jill Bowdon\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10959", "label": "Jodi M Casabianca", "shape": "dot", "title": "R305B100012\nYear: 2010\nName: Jodi M Casabianca\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13639", "label": "John Froiland", "shape": "dot", "title": "R305B050030\nYear: 2005\nName: John Froiland\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14856", "label": "Jonte Taylor", "shape": "dot", "title": "R305B100005\nYear: 2010\nName: Jonte Taylor\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "37", "label": "Joseph Nese", "shape": "dot", "title": "R305A200018\nYear: 2020\nName: Joseph Nese\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "6179", "label": "Joseph Nese", "shape": "dot", "title": "R305D200038\nYear: 2020\nName: Joseph Nese\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "6294", "label": "Joseph Nese", "shape": "dot", "title": "R305A180006\nYear: 2018\nName: Joseph Nese\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "2699", "label": "Joseph Nese", "shape": "dot", "title": "R305A140203\nYear: 2014\nName: Joseph Nese\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13572", "label": "Joseph Nese", "shape": "dot", "title": "R305B080004\nYear: 2008\nName: Joseph Nese\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13573", "label": "Josh R. Polanin", "shape": "dot", "title": "R305B100016\nYear: 2010\nName: Josh R. Polanin\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "8261", "label": "Joshua Plavnick", "shape": "dot", "title": "R324A180122\nYear: 2018\nName: Joshua Plavnick\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13562", "label": "Joshua Plavnick", "shape": "dot", "title": "R324B090005\nYear: 2009\nName: Joshua Plavnick\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13665", "label": "Jos\u00e9 Guti\u00e9rrez", "shape": "dot", "title": "R305B130007\nYear: 2013\nName: Jos\u00e9 Guti\u00e9rrez\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12022", "label": "Joy Lesnick", "shape": "dot", "title": "R305B050029\nYear: 2005\nName: Joy Lesnick\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13588", "label": "Joy Polignano", "shape": "dot", "title": "R324B120002\nYear: 2012\nName: Joy Polignano\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10960", "label": "Julia Heath Kaufman", "shape": "dot", "title": "R305B100012\nYear: 2010\nName: Julia Heath Kaufman\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13605", "label": "JulieAnn Stawicki", "shape": "dot", "title": "R305B050014\nYear: 2005\nName: JulieAnn Stawicki\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10757", "label": "Justin Olmanson", "shape": "dot", "title": "R305B110008\nYear: 2011\nName: Justin Olmanson\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "Florida International University", "label": "Florida International University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "William Pelham", "label": "William Pelham", "shape": "dot", "size": 8}, {"color": "orange", "font": {"color": "white"}, "id": "5338", "label": "Karen Derefinko", "shape": "dot", "title": "R324A120169\nYear: 2012\nName: Karen Derefinko\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13642", "label": "Karen Derefinko", "shape": "dot", "title": "R324B090010\nYear: 2009\nName: Karen Derefinko\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10879", "label": "Katherine Castellano", "shape": "dot", "title": "R305B110017\nYear: 2011\nName: Katherine Castellano\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "1253", "label": "Katherine Michelmore", "shape": "dot", "title": "R305A220070\nYear: 2022\nName: Katherine Michelmore\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13650", "label": "Katherine Michelmore", "shape": "dot", "title": "R305B110001\nYear: 2011\nName: Katherine Michelmore\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13643", "label": "Katie Hart", "shape": "dot", "title": "R324B090010\nYear: 2009\nName: Katie Hart\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15365", "label": "Kelly Feeney-Kettler", "shape": "dot", "title": "R324B080005\nYear: 2008\nName: Kelly Feeney-Kettler\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15105", "label": "Kelly Rosinger", "shape": "dot", "title": "R305B130013\nYear: 2013\nName: Kelly Rosinger\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "11115", "label": "Kenneth Wright", "shape": "dot", "title": "R305A070491\nYear: 2007\nName: Kenneth Wright\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13575", "label": "Kimberly Turner Nisbett", "shape": "dot", "title": "R305B100016\nYear: 2010\nName: Kimberly Turner Nisbett\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13350", "label": "Kreshnik Begolli", "shape": "dot", "title": "R305B150014\nYear: 2015\nName: Kreshnik Begolli\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15367", "label": "Kristen Bottema-Beutel ", "shape": "dot", "title": "R324B080005\nYear: 2008\nName: Kristen Bottema-Beutel \nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13694", "label": "Kristen Carroll", "shape": "dot", "title": "R305B170009\nYear: 2017\nName: Kristen Carroll\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "3666", "label": "Kristi Morin", "shape": "dot", "title": "R324B210017\nYear: 2021\nName: Kristi Morin\nRole: PrincipalName"}, {"color": "red", "font": {"color": "white"}, "id": "Kara Hume", "label": "Kara Hume", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13551", "label": "Kristi Morin", "shape": "dot", "title": "R324B160038\nYear: 2016\nName: Kristi Morin\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13565", "label": "Kristin Rispoli", "shape": "dot", "title": "R305B080010\nYear: 2008\nName: Kristin Rispoli\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15087", "label": "Krystal Thomas", "shape": "dot", "title": "R305B170002\nYear: 2017\nName: Krystal Thomas\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13566", "label": "Kyongboon Kwon", "shape": "dot", "title": "R305B080010\nYear: 2008\nName: Kyongboon Kwon\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13691", "label": "LaTanya Dixon", "shape": "dot", "title": "R305B170009\nYear: 2017\nName: LaTanya Dixon\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15153", "label": "Larissa Gaias", "shape": "dot", "title": "R305B170021\nYear: 2017\nName: Larissa Gaias\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15090", "label": "Laura Bellows", "shape": "dot", "title": "R305B170002\nYear: 2017\nName: Laura Bellows\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13646", "label": "Laura Halderman", "shape": "dot", "title": "R305B050022\nYear: 2005\nName: Laura Halderman\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "New York University", "label": "New York University", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Jennifer Hill", "label": "Jennifer Hill", "shape": "dot", "size": 8}, {"color": "pink", "font": {"color": "white"}, "id": "13385", "label": "Lauren Fellers", "shape": "dot", "title": "R305B120017\nYear: 2012\nName: Lauren Fellers\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10876", "label": "Leah Feuerstahler", "shape": "dot", "title": "R305B110017\nYear: 2011\nName: Leah Feuerstahler\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12250", "label": "Leigh Harrell-Williams", "shape": "dot", "title": "R324B080006\nYear: 2008\nName: Leigh Harrell-Williams\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13516", "label": "Leilana S\u00e1ez", "shape": "dot", "title": "R305B050032\nYear: 2005\nName: Leilana S\u00e1ez\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "5186", "label": "Leilani S\u00e1ez", "shape": "dot", "title": "R305A200018\nYear: 2020\nName: Leilani S\u00e1ez\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13571", "label": "Leilani S\u00e1ez", "shape": "dot", "title": "R305B080004\nYear: 2008\nName: Leilani S\u00e1ez\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13564", "label": "Leslie Hawley", "shape": "dot", "title": "R305B080010\nYear: 2008\nName: Leslie Hawley\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15104", "label": "Lia Sandilos", "shape": "dot", "title": "R305B130013\nYear: 2013\nName: Lia Sandilos\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "5751", "label": "Lindsay Flynn", "shape": "dot", "title": "R324A120173\nYear: 2012\nName: Lindsay Flynn\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13577", "label": "Lindsay Flynn", "shape": "dot", "title": "R324B080002\nYear: 2008\nName: Lindsay Flynn\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13638", "label": "Lisa Fazio", "shape": "dot", "title": "R305B100001\nYear: 2010\nName: Lisa Fazio\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13578", "label": "Loan Tran", "shape": "dot", "title": "R324B080002\nYear: 2008\nName: Loan Tran\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13543", "label": "Marc Weeden", "shape": "dot", "title": "R324B100004\nYear: 2010\nName: Marc Weeden\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13716", "label": "Marci DeCaro", "shape": "dot", "title": "R305B080008\nYear: 2008\nName: Marci DeCaro\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14857", "label": "Marcia Laugerman", "shape": "dot", "title": "R305B100005\nYear: 2010\nName: Marcia Laugerman\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15155", "label": "Maria Hugh", "shape": "dot", "title": "R305B170021\nYear: 2017\nName: Maria Hugh\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13689", "label": "Maria Schweer-Collins", "shape": "dot", "title": "R324B180001\nYear: 2018\nName: Maria Schweer-Collins\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13656", "label": "Marissa Thompson", "shape": "dot", "title": "R305B170015\nYear: 2017\nName: Marissa Thompson\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "19498", "label": "Marissa Thompson", "shape": "dot", "title": "R305B140009\nYear: 2014\nName: Marissa Thompson\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13535", "label": "Marshall Jean", "shape": "dot", "title": "R305B100027\nYear: 2010\nName: Marshall Jean\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "17664", "label": "Marshall Jean", "shape": "dot", "title": "R305B090025\nYear: 2009\nName: Marshall Jean\nRole: Predoc"}, {"color": "red", "font": {"color": "white"}, "id": "848", "label": "Martyna Citkowicz", "shape": "dot", "title": "R305D220026\nYear: 2022\nName: Martyna Citkowicz\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13530", "label": "Martyna Citkowicz", "shape": "dot", "title": "R305B100027\nYear: 2010\nName: Martyna Citkowicz\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13574", "label": "Mary Fuhs", "shape": "dot", "title": "R305B100016\nYear: 2010\nName: Mary Fuhs\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14859", "label": "Mary Grace Villanueva", "shape": "dot", "title": "R305B100005\nYear: 2010\nName: Mary Grace Villanueva\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "6934", "label": "Matthew Foster", "shape": "dot", "title": "R305A210182\nYear: 2021\nName: Matthew Foster\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "14327", "label": "Matthew Foster", "shape": "dot", "title": "R324B110007\nYear: 2011\nName: Matthew Foster\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Kristin Duppong Hurley", "label": "Kristin Duppong Hurley", "shape": "dot", "size": 8}, {"color": "orange", "font": {"color": "white"}, "id": "8287", "label": "Matthew Lambert", "shape": "dot", "title": "R324A190055\nYear: 2019\nName: Matthew Lambert\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "15031", "label": "Matthew Lambert", "shape": "dot", "title": "R324B110001\nYear: 2011\nName: Matthew Lambert\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "8326", "label": "Matthew Ronfeldt", "shape": "dot", "title": "R305A220054\nYear: 2022\nName: Matthew Ronfeldt\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13614", "label": "Matthew Ronfeldt", "shape": "dot", "title": "R305B060010\nYear: 2006\nName: Matthew Ronfeldt\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10851", "label": "Matthew Zajic", "shape": "dot", "title": "R324B180034\nYear: 2018\nName: Matthew Zajic\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13537", "label": "Meaghan McKenna", "shape": "dot", "title": "R324B180004\nYear: 2018\nName: Meaghan McKenna\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13609", "label": "Megan Brown", "shape": "dot", "title": "R305A070313\nYear: 2007\nName: Megan Brown\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "17914", "label": "Megan Brown", "shape": "dot", "title": "R305C050055\nYear: 2005\nName: Megan Brown\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "11024", "label": "Megan Johanson", "shape": "dot", "title": "R305B120008\nYear: 2012\nName: Megan Johanson\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13702", "label": "Melinda Petre", "shape": "dot", "title": "R305B120013\nYear: 2012\nName: Melinda Petre\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13767", "label": "Melinda Sota", "shape": "dot", "title": "R305B110012\nYear: 2011\nName: Melinda Sota\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13582", "label": "Melissa Mincic", "shape": "dot", "title": "R305B100028\nYear: 2010\nName: Melissa Mincic\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13549", "label": "Melissa Savage", "shape": "dot", "title": "R324B160038\nYear: 2016\nName: Melissa Savage\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13491", "label": "Meredith Richards", "shape": "dot", "title": "R305B100013\nYear: 2010\nName: Meredith Richards\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13607", "label": "Mi-Young Webb", "shape": "dot", "title": "R305A070313\nYear: 2007\nName: Mi-Young Webb\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13383", "label": "Michael Betancourt", "shape": "dot", "title": "R305B120017\nYear: 2012\nName: Michael Betancourt\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13666", "label": "Michael D. Eiland", "shape": "dot", "title": "R305B130007\nYear: 2013\nName: Michael D. Eiland\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13686", "label": "Michael D. Eiland", "shape": "dot", "title": "R305B100007\nYear: 2010\nName: Michael D. Eiland\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13719", "label": "Michael Miller", "shape": "dot", "title": "R305B080008\nYear: 2008\nName: Michael Miller\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "7051", "label": "Mimi Engel", "shape": "dot", "title": "R305A220281\nYear: 2022\nName: Mimi Engel\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "3159", "label": "Mimi Engel", "shape": "dot", "title": "R305H190060\nYear: 2019\nName: Mimi Engel\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13529", "label": "Mimi Engel", "shape": "dot", "title": "R305B100027\nYear: 2010\nName: Mimi Engel\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13552", "label": "Nancy McIntyre", "shape": "dot", "title": "R324B160038\nYear: 2016\nName: Nancy McIntyre\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "5212", "label": "Natalia Alexeev", "shape": "dot", "title": "R305A110920\nYear: 2011\nName: Natalia Alexeev\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "12248", "label": "Natalia Alexeev", "shape": "dot", "title": "R324B080006\nYear: 2008\nName: Natalia Alexeev\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "6938", "label": "Nathan Jones", "shape": "dot", "title": "R324B170017\nYear: 2017\nName: Nathan Jones\nRole: Co-Principal Investigators"}, {"color": "orange", "font": {"color": "white"}, "id": "9498", "label": "Nathan Jones", "shape": "dot", "title": "R305A180516\nYear: 2016\nName: Nathan Jones\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "4954", "label": "Nathan Jones", "shape": "dot", "title": "R324A150231\nYear: 2015\nName: Nathan Jones\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13533", "label": "Nathan Jones", "shape": "dot", "title": "R305B100027\nYear: 2010\nName: Nathan Jones\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "2726", "label": "Nathan VanHoudnos", "shape": "dot", "title": "R305D160016\nYear: 2016\nName: Nathan VanHoudnos\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13532", "label": "Nathan VanHoudnos", "shape": "dot", "title": "R305B100027\nYear: 2010\nName: Nathan VanHoudnos\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "16130", "label": "Nathan VanHoudnos", "shape": "dot", "title": "R305B090023\nYear: 2009\nName: Nathan VanHoudnos\nRole: Predoc"}, {"color": "red", "font": {"color": "white"}, "id": "3050", "label": "Nicholas Gage", "shape": "dot", "title": "91990022F0340\nYear: 2022\nName: Nicholas Gage\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "6129", "label": "Nicholas Gage", "shape": "dot", "title": "R324B200016\nYear: 2020\nName: Nicholas Gage\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "408", "label": "Nicholas Gage", "shape": "dot", "title": "R324A160154\nYear: 2016\nName: Nicholas Gage\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13721", "label": "Nicholas Gage", "shape": "dot", "title": "R324B080007\nYear: 2008\nName: Nicholas Gage\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13664", "label": "Nicole Fonger", "shape": "dot", "title": "R305B130007\nYear: 2013\nName: Nicole Fonger\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13348", "label": "Nicole Hallinen", "shape": "dot", "title": "R305B150014\nYear: 2015\nName: Nicole Hallinen\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13586", "label": "Nicole Pyle", "shape": "dot", "title": "R324B080008\nYear: 2008\nName: Nicole Pyle\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13492", "label": "Nicole Sorhagen", "shape": "dot", "title": "R305B100013\nYear: 2010\nName: Nicole Sorhagen\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13558", "label": "Nigel Pierce", "shape": "dot", "title": "R324B090005\nYear: 2009\nName: Nigel Pierce\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13699", "label": "Paul Hanselman", "shape": "dot", "title": "R305B120013\nYear: 2012\nName: Paul Hanselman\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "17919", "label": "Paul Hanselman", "shape": "dot", "title": "R305C050055\nYear: 2005\nName: Paul Hanselman\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13766", "label": "Paul Morphy", "shape": "dot", "title": "R305B110012\nYear: 2011\nName: Paul Morphy\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "20438", "label": "Paul Morphy", "shape": "dot", "title": "R305B080025\nYear: 2008\nName: Paul Morphy\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12648", "label": "Paul O\u0027Keefe", "shape": "dot", "title": "R305B080007\nYear: 2008\nName: Paul O\u0027Keefe\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "1116", "label": "Paulo Graziano", "shape": "dot", "title": "R324A120136\nYear: 2012\nName: Paulo Graziano\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13644", "label": "Paulo Graziano", "shape": "dot", "title": "R324B090010\nYear: 2009\nName: Paulo Graziano\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13606", "label": "Peter Crume", "shape": "dot", "title": "R305A070313\nYear: 2007\nName: Peter Crume\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15106", "label": "Priscilla Goble", "shape": "dot", "title": "R305B130013\nYear: 2013\nName: Priscilla Goble\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "739", "label": "Rachel Rosen", "shape": "dot", "title": "R305A200307\nYear: 2020\nName: Rachel Rosen\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "9561", "label": "Rachel Rosen", "shape": "dot", "title": "R305H190036\nYear: 2019\nName: Rachel Rosen\nRole: Co-Principal Investigators"}, {"color": "red", "font": {"color": "white"}, "id": "3130", "label": "Rachel Rosen", "shape": "dot", "title": "R305A170250\nYear: 2017\nName: Rachel Rosen\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13652", "label": "Rachel Rosen", "shape": "dot", "title": "R305B110001\nYear: 2011\nName: Rachel Rosen\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "11023", "label": "Rachel Schachter", "shape": "dot", "title": "R305B120008\nYear: 2012\nName: Rachel Schachter\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13726", "label": "Ran Liu", "shape": "dot", "title": "R305B110003\nYear: 2011\nName: Ran Liu\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13687", "label": "Rebecca Boncoddo", "shape": "dot", "title": "R305B100007\nYear: 2010\nName: Rebecca Boncoddo\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13629", "label": "Rebecca Dore", "shape": "dot", "title": "R305B130012\nYear: 2013\nName: Rebecca Dore\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13701", "label": "Robert Duncan", "shape": "dot", "title": "R305B120013\nYear: 2012\nName: Robert Duncan\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13640", "label": "Robert San Juan", "shape": "dot", "title": "R305B050030\nYear: 2005\nName: Robert San Juan\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13715", "label": "Roger Taylor", "shape": "dot", "title": "R305B080008\nYear: 2008\nName: Roger Taylor\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13384", "label": "Ronli Diakow", "shape": "dot", "title": "R305B120017\nYear: 2012\nName: Ronli Diakow\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "Geoffrey Saxe", "label": "Geoffrey Saxe", "shape": "dot", "size": 8}, {"color": "white", "font": {"color": "white"}, "id": "19286", "label": "Ronli Diakow", "shape": "dot", "title": "R305B090026\nYear: 2009\nName: Ronli Diakow\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13622", "label": "Roopa Iyer", "shape": "dot", "title": "R305B050013\nYear: 2005\nName: Roopa Iyer\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "13", "label": "Rose Mason", "shape": "dot", "title": "R324A180186\nYear: 2018\nName: Rose Mason\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13547", "label": "Rose Mason", "shape": "dot", "title": "R324B100004\nYear: 2010\nName: Rose Mason\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12656", "label": "Ross Larsen", "shape": "dot", "title": "R305B100009\nYear: 2010\nName: Ross Larsen\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13720", "label": "Sabina Neugebauer", "shape": "dot", "title": "R324B080007\nYear: 2008\nName: Sabina Neugebauer\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13655", "label": "Sabrina Solanki", "shape": "dot", "title": "R305B170015\nYear: 2017\nName: Sabrina Solanki\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13550", "label": "Sallie Nowell", "shape": "dot", "title": "R324B160038\nYear: 2016\nName: Sallie Nowell\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "2835", "label": "Sandra Soliday Hong", "shape": "dot", "title": "R305A200308\nYear: 2020\nName: Sandra Soliday Hong\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13581", "label": "Sandra Soliday Hong", "shape": "dot", "title": "R305B100028\nYear: 2010\nName: Sandra Soliday Hong\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13649", "label": "Sarah Cannon", "shape": "dot", "title": "R305B110001\nYear: 2011\nName: Sarah Cannon\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "David Uttal", "label": "David Uttal", "shape": "dot", "size": 8}, {"color": "white", "font": {"color": "white"}, "id": "18358", "label": "Sarah Cannon", "shape": "dot", "title": "R305B080027\nYear: 2008\nName: Sarah Cannon\nRole: Predoc"}, {"color": "orange", "font": {"color": "white"}, "id": "8120", "label": "Sarah Carlson", "shape": "dot", "title": "R305A180417\nYear: 2018\nName: Sarah Carlson\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13765", "label": "Sarah Carlson", "shape": "dot", "title": "R305B110012\nYear: 2011\nName: Sarah Carlson\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Minnesota", "label": "University of Minnesota", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Mark L. Davison", "label": "Mark L. Davison", "shape": "dot", "size": 8}, {"color": "white", "font": {"color": "white"}, "id": "18214", "label": "Sarah Carlson", "shape": "dot", "title": "R305C050059\nYear: 2005\nName: Sarah Carlson\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10958", "label": "Sarah M Ryan", "shape": "dot", "title": "R305B100012\nYear: 2010\nName: Sarah M Ryan\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14325", "label": "Sarah Priebe", "shape": "dot", "title": "R324B110007\nYear: 2011\nName: Sarah Priebe\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14339", "label": "Scott Latham", "shape": "dot", "title": "R305B130017\nYear: 2013\nName: Scott Latham\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "20294", "label": "Scott Latham", "shape": "dot", "title": "R305B090002\nYear: 2009\nName: Scott Latham\nRole: Predoc"}, {"color": "red", "font": {"color": "white"}, "id": "1130", "label": "Scott Spaulding", "shape": "dot", "title": "R324A180061\nYear: 2018\nName: Scott Spaulding\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13616", "label": "Scott Spaulding", "shape": "dot", "title": "R305B060014\nYear: 2006\nName: Scott Spaulding\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12019", "label": "Sean Hurley", "shape": "dot", "title": "R305B050029\nYear: 2005\nName: Sean Hurley\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10758", "label": "Shannon Carlin-Menter", "shape": "dot", "title": "R305B110008\nYear: 2011\nName: Shannon Carlin-Menter\nRole: Postdoc"}, {"color": "orange", "font": {"color": "white"}, "id": "9327", "label": "Shannon Holmes", "shape": "dot", "title": "R305A210126\nYear: 2021\nName: Shannon Holmes\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "13082", "label": "Shannon Holmes", "shape": "dot", "title": "R305B150028\nYear: 2015\nName: Shannon Holmes\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15369", "label": "Sharlene Kiuhara", "shape": "dot", "title": "R324B080005\nYear: 2008\nName: Sharlene Kiuhara\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15088", "label": "Shereen El Mallah", "shape": "dot", "title": "R305B170002\nYear: 2017\nName: Shereen El Mallah\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10880", "label": "Shonte Stephenson", "shape": "dot", "title": "R305B110017\nYear: 2011\nName: Shonte Stephenson\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13542", "label": "Shu-Fei Tsai", "shape": "dot", "title": "R324B120004\nYear: 2012\nName: Shu-Fei Tsai\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13515", "label": "Silvia Palenzela", "shape": "dot", "title": "R305B050032\nYear: 2005\nName: Silvia Palenzela\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "10875", "label": "Sira Park", "shape": "dot", "title": "R305B110017\nYear: 2011\nName: Sira Park\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12661", "label": "Sonya Myers", "shape": "dot", "title": "R305B060009\nYear: 2006\nName: Sonya Myers\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15030", "label": "Stacy-Ann January", "shape": "dot", "title": "R324B110001\nYear: 2011\nName: Stacy-Ann January\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15154", "label": "Stephanie Brewer", "shape": "dot", "title": "R305B170021\nYear: 2017\nName: Stephanie Brewer\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13544", "label": "Stephen Crutchfield", "shape": "dot", "title": "R324B100004\nYear: 2010\nName: Stephen Crutchfield\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13651", "label": "Steve Hemelt", "shape": "dot", "title": "R305B110001\nYear: 2011\nName: Steve Hemelt\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15029", "label": "Steven Hoffman", "shape": "dot", "title": "R324B110001\nYear: 2011\nName: Steven Hoffman\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14324", "label": "Susan Dunlap", "shape": "dot", "title": "R324B110007\nYear: 2011\nName: Susan Dunlap\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12647", "label": "Susan Letourneau", "shape": "dot", "title": "R305B080007\nYear: 2008\nName: Susan Letourneau\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "1005", "label": "Suzanne Adlof", "shape": "dot", "title": "R305A130467\nYear: 2013\nName: Suzanne Adlof\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13647", "label": "Suzanne Adlof", "shape": "dot", "title": "R305B050022\nYear: 2005\nName: Suzanne Adlof\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13654", "label": "Tareena Mussadiq", "shape": "dot", "title": "R305B170015\nYear: 2017\nName: Tareena Mussadiq\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15028", "label": "Thomas Gross", "shape": "dot", "title": "R324B110001\nYear: 2011\nName: Thomas Gross\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13559", "label": "Tia Schultz", "shape": "dot", "title": "R324B090005\nYear: 2009\nName: Tia Schultz\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13621", "label": "Tracy Nishida", "shape": "dot", "title": "R305B050013\nYear: 2005\nName: Tracy Nishida\nRole: Postdoc"}, {"color": "white", "font": {"color": "white"}, "id": "17779", "label": "Tracy Nishida", "shape": "dot", "title": "R305B040049\nYear: 2004\nName: Tracy Nishida\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15368", "label": "Trish Steinbrecher", "shape": "dot", "title": "R324B080005\nYear: 2008\nName: Trish Steinbrecher\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "15091", "label": "Tutrang Nguyen", "shape": "dot", "title": "R305B170002\nYear: 2017\nName: Tutrang Nguyen\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "4178", "label": "Tyler Smith", "shape": "dot", "title": "R305A210126\nYear: 2021\nName: Tyler Smith\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13084", "label": "Tyler Smith", "shape": "dot", "title": "R305B150028\nYear: 2015\nName: Tyler Smith\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "12651", "label": "Ulas Kaplan", "shape": "dot", "title": "R305B080007\nYear: 2008\nName: Ulas Kaplan\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "3119", "label": "Veronica Fleury", "shape": "dot", "title": "R324B180035\nYear: 2018\nName: Veronica Fleury\nRole: PrincipalName"}, {"color": "pink", "font": {"color": "white"}, "id": "13561", "label": "Veronica Fleury", "shape": "dot", "title": "R324B090005\nYear: 2009\nName: Veronica Fleury\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13630", "label": "Vinaya Rajan", "shape": "dot", "title": "R305B130012\nYear: 2013\nName: Vinaya Rajan\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13382", "label": "Vincent Dorie", "shape": "dot", "title": "R305B120017\nYear: 2012\nName: Vincent Dorie\nRole: Postdoc"}, {"color": "red", "font": {"color": "white"}, "id": "541", "label": "Virginia Vitiello", "shape": "dot", "title": "R305A190037\nYear: 2019\nName: Virginia Vitiello\nRole: PrincipalName"}, {"color": "orange", "font": {"color": "white"}, "id": "5767", "label": "Virginia Vitiello", "shape": "dot", "title": "R305N160021\nYear: 2016\nName: Virginia Vitiello\nRole: Co-Principal Investigators"}, {"color": "pink", "font": {"color": "white"}, "id": "12657", "label": "Virginia Vitiello", "shape": "dot", "title": "R305B060009\nYear: 2006\nName: Virginia Vitiello\nRole: Postdoc"}, {"color": "green", "font": {"color": "white"}, "id": "University of Miami", "label": "University of Miami", "shape": "dot", "size": 30}, {"color": "red", "font": {"color": "white"}, "id": "Daryl Greenfield", "label": "Daryl Greenfield", "shape": "dot", "size": 8}, {"color": "white", "font": {"color": "white"}, "id": "17835", "label": "Virginia Vitiello", "shape": "dot", "title": "R305C050052\nYear: 2005\nName: Virginia Vitiello\nRole: Predoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13546", "label": "Wendy Iwaszuk", "shape": "dot", "title": "R324B100004\nYear: 2010\nName: Wendy Iwaszuk\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13536", "label": "Xigrid Soto", "shape": "dot", "title": "R324B180004\nYear: 2018\nName: Xigrid Soto\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "13579", "label": "Xinhua Zheng", "shape": "dot", "title": "R324B080002\nYear: 2008\nName: Xinhua Zheng\nRole: Postdoc"}, {"color": "pink", "font": {"color": "white"}, "id": "14338", "label": "Ying Shi", "shape": "dot", "title": "R305B130017\nYear: 2013\nName: Ying Shi\nRole: Postdoc"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "Carnegie Mellon University", "to": "Brian Junker"}, {"arrows": "to", "from": "Brian Junker", "to": "10961"}, {"arrows": "to", "from": "University of Kansas", "to": "Judith Carta"}, {"arrows": "to", "from": "Judith Carta", "to": "13538"}, {"arrows": "to", "from": "Ohio State University", "to": "Laura Justice"}, {"arrows": "to", "from": "Laura Justice", "to": "11025"}, {"arrows": "to", "from": "University of Kansas", "to": "Charles Greenwood"}, {"arrows": "to", "from": "Charles Greenwood", "to": "13540"}, {"arrows": "to", "from": "University of Illinois, Urbana-Champaign", "to": "William Cope"}, {"arrows": "to", "from": "William Cope", "to": "10756"}, {"arrows": "to", "from": "University of Virginia", "to": "Sara Rimm-Kaufman"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "12655"}, {"arrows": "to", "from": "University of Denver", "to": "Julie Sarama"}, {"arrows": "to", "from": "Julie Sarama", "to": "11119"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "12654"}, {"arrows": "to", "from": "University of Virginia", "to": "Emily Solari"}, {"arrows": "to", "from": "Emily Solari", "to": "10853"}, {"arrows": "to", "from": "Vanderbilt University", "to": "Karen Harris"}, {"arrows": "to", "from": "Karen Harris", "to": "15366"}, {"arrows": "to", "from": "Vanderbilt University", "to": "David S. Cordray"}, {"arrows": "to", "from": "David S. Cordray", "to": "12020"}, {"arrows": "to", "from": "University of California, Berkeley", "to": "Mark Wilson"}, {"arrows": "to", "from": "Mark Wilson", "to": "14619"}, {"arrows": "to", "from": "University of Virginia", "to": "Robert C. Pianta"}, {"arrows": "to", "from": "Robert C. Pianta", "to": "12660"}, {"arrows": "to", "from": "Florida State University", "to": "Christopher Lonigan"}, {"arrows": "to", "from": "Christopher Lonigan", "to": "13518"}, {"arrows": "to", "from": "Temple University", "to": "Nora S. Newcombe"}, {"arrows": "to", "from": "Nora S. Newcombe", "to": "13349"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "12652"}, {"arrows": "to", "from": "University of North Carolina, Chapel Hill", "to": "Samuel Odom"}, {"arrows": "to", "from": "Samuel Odom", "to": "13557"}, {"arrows": "to", "from": "Robert C. Pianta", "to": "12659"}, {"arrows": "to", "from": "University of Texas, Austin", "to": "Sharon Vaughn"}, {"arrows": "to", "from": "Sharon Vaughn", "to": "13587"}, {"arrows": "to", "from": "University of Nebraska, Lincoln", "to": "Alexandra Torkelson-Trout"}, {"arrows": "to", "from": "Alexandra Torkelson-Trout", "to": "15032"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "15108"}, {"arrows": "to", "from": "University of Virginia", "to": "Daphna Bassok"}, {"arrows": "to", "from": "University of Michigan", "to": "Christina Weiland"}, {"arrows": "to", "from": "Christina Weiland", "to": "18910"}, {"arrows": "to", "from": "William Cope", "to": "10760"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "15107"}, {"arrows": "to", "from": "University of North Carolina, Chapel Hill", "to": "Margaret Burchinal"}, {"arrows": "to", "from": "Margaret Burchinal", "to": "13627"}, {"arrows": "to", "from": "Vanderbilt University", "to": "Dale Farran"}, {"arrows": "to", "from": "Dale Farran", "to": "13576"}, {"arrows": "to", "from": "Carnegie Mellon University", "to": "David Klahr"}, {"arrows": "to", "from": "David Klahr", "to": "13724"}, {"arrows": "to", "from": "University of Kansas", "to": "Debra Kamps"}, {"arrows": "to", "from": "Debra Kamps", "to": "13545"}, {"arrows": "to", "from": "Robert C. Pianta", "to": "12658"}, {"arrows": "to", "from": "University of Pennsylvania", "to": "Laura Desimone"}, {"arrows": "to", "from": "Laura Desimone", "to": "13490"}, {"arrows": "to", "from": "Mark Wilson", "to": "14620"}, {"arrows": "to", "from": "Sharon Vaughn", "to": "13585"}, {"arrows": "to", "from": "University of Connecticut", "to": "Sandra Chafouleas"}, {"arrows": "to", "from": "Sandra Chafouleas", "to": "13722"}, {"arrows": "to", "from": "University of California, Riverside", "to": "H. Lee Swanson"}, {"arrows": "to", "from": "H. Lee Swanson", "to": "13580"}, {"arrows": "to", "from": "Nora S. Newcombe", "to": "13351"}, {"arrows": "to", "from": "Georgia State University", "to": "Randy Kamphaus"}, {"arrows": "to", "from": "Randy Kamphaus", "to": "12249"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "12653"}, {"arrows": "to", "from": "University of Oregon", "to": "Ed Kame\u0027enui"}, {"arrows": "to", "from": "Ed Kame\u0027enui", "to": "13764"}, {"arrows": "to", "from": "University of Wisconsin, Madison", "to": "Mitchell Nathan"}, {"arrows": "to", "from": "University of Wisconsin, Madison", "to": "Anita Wager"}, {"arrows": "to", "from": "Anita Wager", "to": "13683"}, {"arrows": "to", "from": "Debra Kamps", "to": "13548"}, {"arrows": "to", "from": "Emily Solari", "to": "10852"}, {"arrows": "to", "from": "Robert C. Pianta", "to": "17784"}, {"arrows": "to", "from": "University of Illinois, Urbana-Champaign", "to": "Sarah Lubienski"}, {"arrows": "to", "from": "Sarah Lubienski", "to": "15024"}, {"arrows": "to", "from": "Georgia State University", "to": "Rose Sevcik"}, {"arrows": "to", "from": "Rose Sevcik", "to": "13610"}, {"arrows": "to", "from": "David Klahr", "to": "13727"}, {"arrows": "to", "from": "University of Oregon", "to": "Gerald Tindal"}, {"arrows": "to", "from": "Gerald Tindal", "to": "13569"}, {"arrows": "to", "from": "David S. Cordray", "to": "12021"}, {"arrows": "to", "from": "University of Wisconsin, Madison", "to": "Adam Gamoran"}, {"arrows": "to", "from": "Adam Gamoran", "to": "17918"}, {"arrows": "to", "from": "University of Delaware", "to": "Nancy Jordan"}, {"arrows": "to", "from": "Nancy Jordan", "to": "13631"}, {"arrows": "to", "from": "Vanderbilt University", "to": "Paul Cobb"}, {"arrows": "to", "from": "Paul Cobb", "to": "13717"}, {"arrows": "to", "from": "University of Oregon", "to": "Elizabeth Stormshak"}, {"arrows": "to", "from": "Elizabeth Stormshak", "to": "13688"}, {"arrows": "to", "from": "Northwestern University", "to": "Larry Hedges"}, {"arrows": "to", "from": "Larry Hedges", "to": "13531"}, {"arrows": "to", "from": "Julie Sarama", "to": "11116"}, {"arrows": "to", "from": "University of Missouri, Columbia", "to": "Wendy Reinke"}, {"arrows": "to", "from": "Wendy Reinke", "to": "13083"}, {"arrows": "to", "from": "Robert C. Pianta", "to": "12662"}, {"arrows": "to", "from": "Stanford University", "to": "Susanna Loeb"}, {"arrows": "to", "from": "Susanna Loeb", "to": "13613"}, {"arrows": "to", "from": "Sarah Lubienski", "to": "15022"}, {"arrows": "to", "from": "Samuel Odom", "to": "13560"}, {"arrows": "to", "from": "Charles Greenwood", "to": "13541"}, {"arrows": "to", "from": "University of Nebraska, Lincoln", "to": "Susan Sheridan"}, {"arrows": "to", "from": "Susan Sheridan", "to": "13567"}, {"arrows": "to", "from": "University of Washington", "to": "Eric Bruns"}, {"arrows": "to", "from": "Eric Bruns", "to": "15152"}, {"arrows": "to", "from": "Susanna Loeb", "to": "13615"}, {"arrows": "to", "from": "University of Florida", "to": "Patricia Snyder"}, {"arrows": "to", "from": "Patricia Snyder", "to": "13591"}, {"arrows": "to", "from": "Larry Hedges", "to": "13534"}, {"arrows": "to", "from": "Christopher Lonigan", "to": "13514"}, {"arrows": "to", "from": "Paul Cobb", "to": "13718"}, {"arrows": "to", "from": "Ed Kame\u0027enui", "to": "13768"}, {"arrows": "to", "from": "University of Michigan", "to": "Susan Dynarski"}, {"arrows": "to", "from": "University of Chicago", "to": "Stephen Raudenbush"}, {"arrows": "to", "from": "Stephen Raudenbush", "to": "17660"}, {"arrows": "to", "from": "David S. Cordray", "to": "17177"}, {"arrows": "to", "from": "Alexandra Torkelson-Trout", "to": "15034"}, {"arrows": "to", "from": "City University of New York (CUNY)", "to": "Bruce Homer"}, {"arrows": "to", "from": "Bruce Homer", "to": "12649"}, {"arrows": "to", "from": "Carnegie Mellon University", "to": "Robert Siegler"}, {"arrows": "to", "from": "Robert Siegler", "to": "13636"}, {"arrows": "to", "from": "Christopher Lonigan", "to": "18651"}, {"arrows": "to", "from": "Margaret Burchinal", "to": "13624"}, {"arrows": "to", "from": "Robert Siegler", "to": "13637"}, {"arrows": "to", "from": "Charles Greenwood", "to": "13539"}, {"arrows": "to", "from": "Mark Wilson", "to": "14621"}, {"arrows": "to", "from": "Gerald Tindal", "to": "13568"}, {"arrows": "to", "from": "Anita Wager", "to": "13685"}, {"arrows": "to", "from": "Mark Wilson", "to": "10877"}, {"arrows": "to", "from": "William Cope", "to": "10761"}, {"arrows": "to", "from": "Susan Sheridan", "to": "13563"}, {"arrows": "to", "from": "Purdue University", "to": "Douglas Powell"}, {"arrows": "to", "from": "Douglas Powell", "to": "13641"}, {"arrows": "to", "from": "Mitchell Nathan", "to": "13663"}, {"arrows": "to", "from": "University of Texas Health Science Center at Houston", "to": "Jason Anthony"}, {"arrows": "to", "from": "Jason Anthony", "to": "14326"}, {"arrows": "to", "from": "Sarah Lubienski", "to": "15021"}, {"arrows": "to", "from": "Stanford University", "to": "Sean Reardon"}, {"arrows": "to", "from": "Sean Reardon", "to": "14337"}, {"arrows": "to", "from": "University of Iowa", "to": "William Therrien"}, {"arrows": "to", "from": "William Therrien", "to": "14858"}, {"arrows": "to", "from": "Rose Sevcik", "to": "13608"}, {"arrows": "to", "from": "Margaret Burchinal", "to": "13626"}, {"arrows": "to", "from": "University of Oregon", "to": "Robert Horner"}, {"arrows": "to", "from": "Robert Horner", "to": "13619"}, {"arrows": "to", "from": "Sarah Lubienski", "to": "15023"}, {"arrows": "to", "from": "Larry Hedges", "to": "13604"}, {"arrows": "to", "from": "Patricia Snyder", "to": "13590"}, {"arrows": "to", "from": "Elizabeth Stormshak", "to": "13690"}, {"arrows": "to", "from": "Bruce Homer", "to": "12650"}, {"arrows": "to", "from": "Sharon Vaughn", "to": "13584"}, {"arrows": "to", "from": "Susanna Loeb", "to": "13612"}, {"arrows": "to", "from": "Gerald Tindal", "to": "13570"}, {"arrows": "to", "from": "University of Michigan", "to": "Brian A. Jacob"}, {"arrows": "to", "from": "Brian A. Jacob", "to": "13657"}, {"arrows": "to", "from": "Robert Horner", "to": "13617"}, {"arrows": "to", "from": "University of Pittsburgh", "to": "Charles Perfetti"}, {"arrows": "to", "from": "Charles Perfetti", "to": "13645"}, {"arrows": "to", "from": "Julie Sarama", "to": "11117"}, {"arrows": "to", "from": "Patricia Snyder", "to": "13589"}, {"arrows": "to", "from": "Margaret Burchinal", "to": "13625"}, {"arrows": "to", "from": "David Klahr", "to": "13725"}, {"arrows": "to", "from": "Nancy Jordan", "to": "13628"}, {"arrows": "to", "from": "Margaret Burchinal", "to": "13583"}, {"arrows": "to", "from": "Mark Wilson", "to": "10878"}, {"arrows": "to", "from": "Laura Desimone", "to": "13489"}, {"arrows": "to", "from": "University of California, Irvine", "to": "Greg Duncan"}, {"arrows": "to", "from": "Greg Duncan", "to": "13700"}, {"arrows": "to", "from": "University of Kansas", "to": "Howard Wills"}, {"arrows": "to", "from": "Howard Wills", "to": "13611"}, {"arrows": "to", "from": "Wendy Reinke", "to": "13085"}, {"arrows": "to", "from": "William Cope", "to": "10759"}, {"arrows": "to", "from": "Sean Reardon", "to": "14336"}, {"arrows": "to", "from": "Brian A. Jacob", "to": "13653"}, {"arrows": "to", "from": "David S. Cordray", "to": "12023"}, {"arrows": "to", "from": "Anita Wager", "to": "13684"}, {"arrows": "to", "from": "Alexandra Torkelson-Trout", "to": "15033"}, {"arrows": "to", "from": "Robert Horner", "to": "13618"}, {"arrows": "to", "from": "Vanderbilt University", "to": "Jason Grissom"}, {"arrows": "to", "from": "Jason Grissom", "to": "13693"}, {"arrows": "to", "from": "Laura Justice", "to": "11026"}, {"arrows": "to", "from": "Jason Grissom", "to": "13692"}, {"arrows": "to", "from": "Christopher Lonigan", "to": "13517"}, {"arrows": "to", "from": "University of California, Berkeley", "to": "Prentice Starkey"}, {"arrows": "to", "from": "Prentice Starkey", "to": "13623"}, {"arrows": "to", "from": "Randy Kamphaus", "to": "12247"}, {"arrows": "to", "from": "Adam Gamoran", "to": "17902"}, {"arrows": "to", "from": "Brian Junker", "to": "10959"}, {"arrows": "to", "from": "Douglas Powell", "to": "13639"}, {"arrows": "to", "from": "William Therrien", "to": "14856"}, {"arrows": "to", "from": "Gerald Tindal", "to": "13572"}, {"arrows": "to", "from": "Dale Farran", "to": "13573"}, {"arrows": "to", "from": "Samuel Odom", "to": "13562"}, {"arrows": "to", "from": "Mitchell Nathan", "to": "13665"}, {"arrows": "to", "from": "David S. Cordray", "to": "12022"}, {"arrows": "to", "from": "Patricia Snyder", "to": "13588"}, {"arrows": "to", "from": "Brian Junker", "to": "10960"}, {"arrows": "to", "from": "Larry Hedges", "to": "13605"}, {"arrows": "to", "from": "William Cope", "to": "10757"}, {"arrows": "to", "from": "Florida International University", "to": "William Pelham"}, {"arrows": "to", "from": "William Pelham", "to": "13642"}, {"arrows": "to", "from": "Mark Wilson", "to": "10879"}, {"arrows": "to", "from": "Susan Dynarski", "to": "13650"}, {"arrows": "to", "from": "William Pelham", "to": "13643"}, {"arrows": "to", "from": "Karen Harris", "to": "15365"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "15105"}, {"arrows": "to", "from": "Julie Sarama", "to": "11115"}, {"arrows": "to", "from": "Dale Farran", "to": "13575"}, {"arrows": "to", "from": "Nora S. Newcombe", "to": "13350"}, {"arrows": "to", "from": "Karen Harris", "to": "15367"}, {"arrows": "to", "from": "Jason Grissom", "to": "13694"}, {"arrows": "to", "from": "University of North Carolina, Chapel Hill", "to": "Kara Hume"}, {"arrows": "to", "from": "Kara Hume", "to": "13551"}, {"arrows": "to", "from": "Susan Sheridan", "to": "13565"}, {"arrows": "to", "from": "Daphna Bassok", "to": "15087"}, {"arrows": "to", "from": "Susan Sheridan", "to": "13566"}, {"arrows": "to", "from": "Jason Grissom", "to": "13691"}, {"arrows": "to", "from": "Eric Bruns", "to": "15153"}, {"arrows": "to", "from": "Daphna Bassok", "to": "15090"}, {"arrows": "to", "from": "Charles Perfetti", "to": "13646"}, {"arrows": "to", "from": "New York University", "to": "Jennifer Hill"}, {"arrows": "to", "from": "Jennifer Hill", "to": "13385"}, {"arrows": "to", "from": "Mark Wilson", "to": "10876"}, {"arrows": "to", "from": "Randy Kamphaus", "to": "12250"}, {"arrows": "to", "from": "Christopher Lonigan", "to": "13516"}, {"arrows": "to", "from": "Gerald Tindal", "to": "13571"}, {"arrows": "to", "from": "Susan Sheridan", "to": "13564"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "15104"}, {"arrows": "to", "from": "H. Lee Swanson", "to": "13577"}, {"arrows": "to", "from": "Robert Siegler", "to": "13638"}, {"arrows": "to", "from": "H. Lee Swanson", "to": "13578"}, {"arrows": "to", "from": "Debra Kamps", "to": "13543"}, {"arrows": "to", "from": "Paul Cobb", "to": "13716"}, {"arrows": "to", "from": "William Therrien", "to": "14857"}, {"arrows": "to", "from": "Eric Bruns", "to": "15155"}, {"arrows": "to", "from": "Elizabeth Stormshak", "to": "13689"}, {"arrows": "to", "from": "Sean Reardon", "to": "19498"}, {"arrows": "to", "from": "Stephen Raudenbush", "to": "17664"}, {"arrows": "to", "from": "Larry Hedges", "to": "13530"}, {"arrows": "to", "from": "Dale Farran", "to": "13574"}, {"arrows": "to", "from": "William Therrien", "to": "14859"}, {"arrows": "to", "from": "Jason Anthony", "to": "14327"}, {"arrows": "to", "from": "University of Nebraska, Lincoln", "to": "Kristin Duppong Hurley"}, {"arrows": "to", "from": "Kristin Duppong Hurley", "to": "15031"}, {"arrows": "to", "from": "Susanna Loeb", "to": "13614"}, {"arrows": "to", "from": "Emily Solari", "to": "10851"}, {"arrows": "to", "from": "Judith Carta", "to": "13537"}, {"arrows": "to", "from": "Adam Gamoran", "to": "17914"}, {"arrows": "to", "from": "Laura Justice", "to": "11024"}, {"arrows": "to", "from": "Greg Duncan", "to": "13702"}, {"arrows": "to", "from": "Ed Kame\u0027enui", "to": "13767"}, {"arrows": "to", "from": "Margaret Burchinal", "to": "13582"}, {"arrows": "to", "from": "Kara Hume", "to": "13549"}, {"arrows": "to", "from": "Laura Desimone", "to": "13491"}, {"arrows": "to", "from": "Rose Sevcik", "to": "13607"}, {"arrows": "to", "from": "Jennifer Hill", "to": "13383"}, {"arrows": "to", "from": "Anita Wager", "to": "13686"}, {"arrows": "to", "from": "Paul Cobb", "to": "13719"}, {"arrows": "to", "from": "Larry Hedges", "to": "13529"}, {"arrows": "to", "from": "Kara Hume", "to": "13552"}, {"arrows": "to", "from": "Randy Kamphaus", "to": "12248"}, {"arrows": "to", "from": "Larry Hedges", "to": "13533"}, {"arrows": "to", "from": "David Klahr", "to": "16130"}, {"arrows": "to", "from": "Sandra Chafouleas", "to": "13721"}, {"arrows": "to", "from": "Mitchell Nathan", "to": "13664"}, {"arrows": "to", "from": "Nora S. Newcombe", "to": "13348"}, {"arrows": "to", "from": "Sharon Vaughn", "to": "13586"}, {"arrows": "to", "from": "Laura Desimone", "to": "13492"}, {"arrows": "to", "from": "Samuel Odom", "to": "13558"}, {"arrows": "to", "from": "Adam Gamoran", "to": "17919"}, {"arrows": "to", "from": "David S. Cordray", "to": "20438"}, {"arrows": "to", "from": "Bruce Homer", "to": "12648"}, {"arrows": "to", "from": "William Pelham", "to": "13644"}, {"arrows": "to", "from": "Rose Sevcik", "to": "13606"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "15106"}, {"arrows": "to", "from": "Susan Dynarski", "to": "13652"}, {"arrows": "to", "from": "Laura Justice", "to": "11023"}, {"arrows": "to", "from": "David Klahr", "to": "13726"}, {"arrows": "to", "from": "Anita Wager", "to": "13687"}, {"arrows": "to", "from": "Nancy Jordan", "to": "13629"}, {"arrows": "to", "from": "Greg Duncan", "to": "13701"}, {"arrows": "to", "from": "Douglas Powell", "to": "13640"}, {"arrows": "to", "from": "Paul Cobb", "to": "13715"}, {"arrows": "to", "from": "University of California, Berkeley", "to": "Geoffrey Saxe"}, {"arrows": "to", "from": "Geoffrey Saxe", "to": "19286"}, {"arrows": "to", "from": "Prentice Starkey", "to": "13622"}, {"arrows": "to", "from": "Debra Kamps", "to": "13547"}, {"arrows": "to", "from": "Sara Rimm-Kaufman", "to": "12656"}, {"arrows": "to", "from": "Sandra Chafouleas", "to": "13720"}, {"arrows": "to", "from": "Brian A. Jacob", "to": "13655"}, {"arrows": "to", "from": "Kara Hume", "to": "13550"}, {"arrows": "to", "from": "Margaret Burchinal", "to": "13581"}, {"arrows": "to", "from": "Northwestern University", "to": "David Uttal"}, {"arrows": "to", "from": "David Uttal", "to": "18358"}, {"arrows": "to", "from": "University of Minnesota", "to": "Mark L. Davison"}, {"arrows": "to", "from": "Mark L. Davison", "to": "18214"}, {"arrows": "to", "from": "Brian Junker", "to": "10958"}, {"arrows": "to", "from": "Jason Anthony", "to": "14325"}, {"arrows": "to", "from": "Robert C. Pianta", "to": "20294"}, {"arrows": "to", "from": "Robert Horner", "to": "13616"}, {"arrows": "to", "from": "David S. Cordray", "to": "12019"}, {"arrows": "to", "from": "William Cope", "to": "10758"}, {"arrows": "to", "from": "Wendy Reinke", "to": "13082"}, {"arrows": "to", "from": "Karen Harris", "to": "15369"}, {"arrows": "to", "from": "Daphna Bassok", "to": "15088"}, {"arrows": "to", "from": "Mark Wilson", "to": "10880"}, {"arrows": "to", "from": "Charles Greenwood", "to": "13542"}, {"arrows": "to", "from": "Christopher Lonigan", "to": "13515"}, {"arrows": "to", "from": "Mark Wilson", "to": "10875"}, {"arrows": "to", "from": "Robert C. Pianta", "to": "12661"}, {"arrows": "to", "from": "Kristin Duppong Hurley", "to": "15030"}, {"arrows": "to", "from": "Eric Bruns", "to": "15154"}, {"arrows": "to", "from": "Debra Kamps", "to": "13544"}, {"arrows": "to", "from": "Susan Dynarski", "to": "13651"}, {"arrows": "to", "from": "Kristin Duppong Hurley", "to": "15029"}, {"arrows": "to", "from": "Jason Anthony", "to": "14324"}, {"arrows": "to", "from": "Bruce Homer", "to": "12647"}, {"arrows": "to", "from": "Charles Perfetti", "to": "13647"}, {"arrows": "to", "from": "Brian A. Jacob", "to": "13654"}, {"arrows": "to", "from": "Kristin Duppong Hurley", "to": "15028"}, {"arrows": "to", "from": "Samuel Odom", "to": "13559"}, {"arrows": "to", "from": "Robert C. Pianta", "to": "17779"}, {"arrows": "to", "from": "Karen Harris", "to": "15368"}, {"arrows": "to", "from": "Daphna Bassok", "to": "15091"}, {"arrows": "to", "from": "Wendy Reinke", "to": "13084"}, {"arrows": "to", "from": "Bruce Homer", "to": "12651"}, {"arrows": "to", "from": "Samuel Odom", "to": "13561"}, {"arrows": "to", "from": "Nancy Jordan", "to": "13630"}, {"arrows": "to", "from": "Jennifer Hill", "to": "13382"}, {"arrows": "to", "from": "University of Miami", "to": "Daryl Greenfield"}, {"arrows": "to", "from": "Daryl Greenfield", "to": "17835"}, {"arrows": "to", "from": "Debra Kamps", "to": "13546"}, {"arrows": "to", "from": "Judith Carta", "to": "13536"}, {"arrows": "to", "from": "H. Lee Swanson", "to": "13579"}, {"arrows": "to", "from": "Sean Reardon", "to": "14338"}, {"arrows": "to", "from": "7084", "to": "6361"}, {"arrows": "to", "from": "7373", "to": "7084"}, {"arrows": "to", "from": "10961", "to": "7373"}, {"arrows": "to", "from": "4399", "to": "5162"}, {"arrows": "to", "from": "10129", "to": "4399"}, {"arrows": "to", "from": "13540", "to": "10129"}, {"arrows": "to", "from": "8309", "to": "1903"}, {"arrows": "to", "from": "12654", "to": "8309"}, {"arrows": "to", "from": "12020", "to": "9106"}, {"arrows": "to", "from": "9613", "to": "10080"}, {"arrows": "to", "from": "12652", "to": "9613"}, {"arrows": "to", "from": "6223", "to": "1129"}, {"arrows": "to", "from": "13557", "to": "6223"}, {"arrows": "to", "from": "18910", "to": "15089"}, {"arrows": "to", "from": "15107", "to": "9083"}, {"arrows": "to", "from": "8940", "to": "8946"}, {"arrows": "to", "from": "10063", "to": "8940"}, {"arrows": "to", "from": "12653", "to": "10063"}, {"arrows": "to", "from": "7167", "to": "1777"}, {"arrows": "to", "from": "13683", "to": "7167"}, {"arrows": "to", "from": "17784", "to": "11118"}, {"arrows": "to", "from": "17918", "to": "12021"}, {"arrows": "to", "from": "1855", "to": "8157"}, {"arrows": "to", "from": "13531", "to": "1855"}, {"arrows": "to", "from": "15022", "to": "1668"}, {"arrows": "to", "from": "13541", "to": "5264"}, {"arrows": "to", "from": "10282", "to": "5129"}, {"arrows": "to", "from": "3184", "to": "10282"}, {"arrows": "to", "from": "6909", "to": "3184"}, {"arrows": "to", "from": "3190", "to": "6909"}, {"arrows": "to", "from": "1499", "to": "3190"}, {"arrows": "to", "from": "4282", "to": "1499"}, {"arrows": "to", "from": "13514", "to": "4282"}, {"arrows": "to", "from": "13648", "to": "901"}, {"arrows": "to", "from": "17660", "to": "13648"}, {"arrows": "to", "from": "17177", "to": "13723"}, {"arrows": "to", "from": "6270", "to": "3761"}, {"arrows": "to", "from": "6717", "to": "6270"}, {"arrows": "to", "from": "8937", "to": "6717"}, {"arrows": "to", "from": "15020", "to": "8937"}, {"arrows": "to", "from": "18651", "to": "15020"}, {"arrows": "to", "from": "13624", "to": "5138"}, {"arrows": "to", "from": "5161", "to": "8679"}, {"arrows": "to", "from": "4981", "to": "5161"}, {"arrows": "to", "from": "6253", "to": "4981"}, {"arrows": "to", "from": "13539", "to": "6253"}, {"arrows": "to", "from": "15023", "to": "6701"}, {"arrows": "to", "from": "2975", "to": "10107"}, {"arrows": "to", "from": "2978", "to": "2975"}, {"arrows": "to", "from": "13612", "to": "2978"}, {"arrows": "to", "from": "13645", "to": "6393"}, {"arrows": "to", "from": "6409", "to": "6466"}, {"arrows": "to", "from": "13625", "to": "6409"}, {"arrows": "to", "from": "3655", "to": "905"}, {"arrows": "to", "from": "8826", "to": "3655"}, {"arrows": "to", "from": "13618", "to": "8826"}, {"arrows": "to", "from": "17902", "to": "13488"}, {"arrows": "to", "from": "6179", "to": "37"}, {"arrows": "to", "from": "6294", "to": "6179"}, {"arrows": "to", "from": "2699", "to": "6294"}, {"arrows": "to", "from": "13572", "to": "2699"}, {"arrows": "to", "from": "13562", "to": "8261"}, {"arrows": "to", "from": "13642", "to": "5338"}, {"arrows": "to", "from": "13650", "to": "1253"}, {"arrows": "to", "from": "13551", "to": "3666"}, {"arrows": "to", "from": "13571", "to": "5186"}, {"arrows": "to", "from": "13577", "to": "5751"}, {"arrows": "to", "from": "19498", "to": "13656"}, {"arrows": "to", "from": "17664", "to": "13535"}, {"arrows": "to", "from": "13530", "to": "848"}, {"arrows": "to", "from": "14327", "to": "6934"}, {"arrows": "to", "from": "15031", "to": "8287"}, {"arrows": "to", "from": "13614", "to": "8326"}, {"arrows": "to", "from": "17914", "to": "13609"}, {"arrows": "to", "from": "13686", "to": "13666"}, {"arrows": "to", "from": "3159", "to": "7051"}, {"arrows": "to", "from": "13529", "to": "3159"}, {"arrows": "to", "from": "12248", "to": "5212"}, {"arrows": "to", "from": "9498", "to": "6938"}, {"arrows": "to", "from": "4954", "to": "9498"}, {"arrows": "to", "from": "13533", "to": "4954"}, {"arrows": "to", "from": "13532", "to": "2726"}, {"arrows": "to", "from": "16130", "to": "13532"}, {"arrows": "to", "from": "6129", "to": "3050"}, {"arrows": "to", "from": "408", "to": "6129"}, {"arrows": "to", "from": "13721", "to": "408"}, {"arrows": "to", "from": "17919", "to": "13699"}, {"arrows": "to", "from": "20438", "to": "13766"}, {"arrows": "to", "from": "13644", "to": "1116"}, {"arrows": "to", "from": "9561", "to": "739"}, {"arrows": "to", "from": "3130", "to": "9561"}, {"arrows": "to", "from": "13652", "to": "3130"}, {"arrows": "to", "from": "19286", "to": "13384"}, {"arrows": "to", "from": "13547", "to": "13"}, {"arrows": "to", "from": "13581", "to": "2835"}, {"arrows": "to", "from": "18358", "to": "13649"}, {"arrows": "to", "from": "13765", "to": "8120"}, {"arrows": "to", "from": "18214", "to": "13765"}, {"arrows": "to", "from": "20294", "to": "14339"}, {"arrows": "to", "from": "13616", "to": "1130"}, {"arrows": "to", "from": "13082", "to": "9327"}, {"arrows": "to", "from": "13647", "to": "1005"}, {"arrows": "to", "from": "17779", "to": "13621"}, {"arrows": "to", "from": "13084", "to": "4178"}, {"arrows": "to", "from": "13561", "to": "3119"}, {"arrows": "to", "from": "5767", "to": "541"}, {"arrows": "to", "from": "12657", "to": "5767"}, {"arrows": "to", "from": "17835", "to": "12657"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
