@@ -3,7 +3,7 @@ date: 2019-10-16 23:48:05
 layout: post
 title: Modeling Recidivism
 image: assets/img/reports/recidivism.jpg
-page_url: rikeshpatel.io/reports/Modeling_Recidivism.pdf
+page_url: https://rikesh-patel.github.io/Portfolio/reports/Modeling_Recidivism.pdf
 category: Modeling
 tags:
   - Academic Paper
